@@ -1,0 +1,6 @@
+{
+  "name": "Capilla Conecta",
+  "description": "Chat en tiempo real y tablón de anuncios comunitario para los vecinos de Capilla del Monte, Córdoba, Argentina.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

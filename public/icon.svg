@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0f766e" />
+      <stop offset="60%" stop-color="#0d9488" />
+      <stop offset="100%" stop-color="#14b8a6" />
+    </linearGradient>
+    <linearGradient id="mtGrad1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#334155" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+    <linearGradient id="mtGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#475569" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="sunGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Background Base with Rounded Squircle -->
+  <rect width="512" height="512" rx="112" fill="url(#skyGrad)" />
+
+  <!-- Mountain Silhouette (Cerro Uritorco) -->
+  <circle cx="360" cy="160" r="54" fill="url(#sunGrad)" opacity="0.9" />
+
+  <!-- Distant Mountain Peaks -->
+  <path d="M 60 400 L 210 220 L 320 350 L 390 270 L 460 400 Z" fill="url(#mtGrad1)" opacity="0.8" />
+  
+  <!-- Main Peak (Uritorco) -->
+  <path d="M 120 420 L 260 180 L 310 240 L 420 420 Z" fill="url(#mtGrad2)" />
+
+  <!-- Foreground Cerro Glow & Waves -->
+  <path d="M 0 380 Q 140 340 260 360 T 512 370 L 512 512 L 0 512 Z" fill="#042f2e" opacity="0.75" />
+
+  <!-- Community Connection Chat Bubble in Center -->
+  <g filter="url(#shadow)" transform="translate(146, 270)">
+    <rect width="220" height="150" rx="36" fill="#ffffff" />
+    <polygon points="170,148 190,185 205,148" fill="#ffffff" />
+    <!-- Three friendly community dots / icons inside bubble -->
+    <circle cx="65" cy="75" r="14" fill="#0f766e" />
+    <circle cx="110" cy="75" r="14" fill="#f59e0b" />
+    <circle cx="155" cy="75" r="14" fill="#0d9488" />
+  </g>
+</svg>
