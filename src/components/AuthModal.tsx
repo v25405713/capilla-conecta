@@ -106,8 +106,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSuccess, onClose, onOpen
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="w-full max-w-xl my-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm p-3 sm:p-6 flex justify-center items-start sm:items-center">
+      <div className="w-full max-w-xl my-auto rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
         
         {/* Header con identidad de Capilla del Monte */}
         <div className="bg-gradient-to-r from-teal-800 via-teal-700 to-emerald-800 p-6 text-white text-center relative">

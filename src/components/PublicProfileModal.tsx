@@ -63,8 +63,8 @@ export const PublicProfileModal: React.FC<PublicProfileModalProps> = ({
   const formattedName = getFormattedUserName(user);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs p-3 sm:p-6 flex justify-center items-start sm:items-center">
+      <div className="w-full max-w-sm my-auto rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
         
         {/* Banner */}
         <div className="h-20 bg-gradient-to-r from-teal-800 to-emerald-800 relative">

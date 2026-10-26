@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <script>
+      // If served directly from repository root on GitHub Pages without compilation, redirect to pre-built /docs/ bundle
+      if (typeof window !== 'undefined' && location.hostname.includes('github.io') && !location.pathname.includes('/docs')) {
+        const cleanPath = location.pathname.endsWith('/') ? location.pathname : location.pathname + '/';
+        location.replace(cleanPath + 'docs/' + location.search + location.hash);
+      } else if (typeof window !== 'undefined' && location.hostname.includes('github.io') && location.pathname.length > 1 && !location.pathname.endsWith('/') && !location.pathname.split('/').pop().includes('.')) {
+        location.replace(location.pathname + '/' + location.search + location.hash);
+      }
+      // Ignore Vite HMR WebSocket errors per AI Studio runtime guidelines (HMR is disabled)
+      (function() {
+        const origError = console.error;
+        console.error = function(...args) {
+          const str = args.map(a => (typeof a === 'string' ? a : (a && a.message) || '')).join(' ');
+          if (str.includes('WebSocket') && (str.includes('vite') || str.includes('opened') || str.includes('closed'))) {
+            return;
+          }
+          origError.apply(console, args);
+        };
+      })();
+      window.addEventListener('unhandledrejection', function(event) {
+        if (event.reason && (
+          String(event.reason.message || '').includes('WebSocket') ||
+          String(event.reason.message || '').includes('vite') ||
+          String(event.reason.stack || '').includes('@vite/client')
+        )) {
+          event.preventDefault();
+        }
+      });
+      window.addEventListener('error', function(event) {
+        if (
+          String(event.message || '').includes('WebSocket') ||
+          String(event.filename || '').includes('@vite/client')
+        ) {
+          event.preventDefault();
+        }
+      });
+    </script>
+    <title>Capilla Conecta</title>
+    <meta name="description" content="Chat en tiempo real y tablón de anuncios comunitario para los vecinos de Capilla del Monte, Córdoba, Argentina." />
+    <meta property="og:title" content="Capilla Conecta" />
+    <meta property="og:description" content="Chat en tiempo real y tablón de anuncios comunitario para los vecinos de Capilla del Monte, Córdoba, Argentina." />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#0f766e" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="CapillaConecta" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <script type="module" crossorigin src="./assets/index-CWSRaJsX.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-UWLO4e0c.css">
+  <link rel="manifest" href="./manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="./registerSW.js"></script></head>
+  <body class="bg-slate-50 text-slate-900 antialiased selection:bg-teal-100 selection:text-teal-900 min-h-screen">
+    <div id="root"></div>
+  </body>
+</html>

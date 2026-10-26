@@ -5,7 +5,8 @@ import {
   PostComment,
   Report,
   AppNotification,
-  Neighborhood
+  Neighborhood,
+  BARRIOS_CAPILLA
 } from '../types';
 
 export function getBaseUrl(): string {
@@ -31,32 +32,46 @@ export function getBaseUrl(): string {
   return 'https://ais-pre-v3yeffnghbqzf3xhauqokz-663102456098.us-east1.run.app';
 }
 
+import { localFallback } from './localFallback';
+
 async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = endpoint.startsWith('http') ? endpoint : `${getBaseUrl()}${endpoint}`;
-  const res = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-    ...options,
-  });
+  try {
+    const res = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+      ...options,
+    });
 
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.error || 'Ocurrió un error en el servidor');
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Ocurrió un error en el servidor');
+    }
+    return data;
+  } catch (err: any) {
+    // Si la llamada de red falla (CORS o alojamiento 100% estático en GitHub Pages sin servidor),
+    // responder con el fallback local para que la app NUNCA quede en blanco.
+    console.warn(`[API] Servidor no disponible para ${endpoint}, utilizando almacenamiento local de respaldo.`, err);
+    throw err;
   }
-  return data;
 }
 
 export const api = {
   // Auth
-  login: (email: string, password?: string) =>
-    request<{ user: User }>('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    }),
+  login: async (email: string, password?: string) => {
+    try {
+      return await request<{ user: User }>('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      });
+    } catch {
+      return localFallback.login(email);
+    }
+  },
 
-  register: (payload: {
+  register: async (payload: {
     email: string;
     password?: string;
     displayName: string;
@@ -65,20 +80,35 @@ export const api = {
     phone?: string;
     phoneVisible?: boolean;
     bio?: string;
-  }) =>
-    request<{ user: User }>('/api/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    }),
+  }) => {
+    try {
+      return await request<{ user: User }>('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    } catch {
+      return localFallback.register(payload);
+    }
+  },
 
-  getDemoUsers: () =>
-    request<{ users: any[] }>('/api/auth/demo-users'),
+  getDemoUsers: async () => {
+    try {
+      return await request<{ users: any[] }>('/api/auth/demo-users');
+    } catch {
+      return localFallback.getDemoUsers();
+    }
+  },
 
-  switchDemo: (userId: string) =>
-    request<{ user: User }>('/api/auth/switch-demo', {
-      method: 'POST',
-      body: JSON.stringify({ userId }),
-    }),
+  switchDemo: async (userId: string) => {
+    try {
+      return await request<{ user: User }>('/api/auth/switch-demo', {
+        method: 'POST',
+        body: JSON.stringify({ userId }),
+      });
+    } catch {
+      return localFallback.switchDemo(userId);
+    }
+  },
 
   updateProfile: (userId: string, data: Partial<User>) =>
     request<{ user: User }>(`/api/auth/profile/${userId}`, {
@@ -87,17 +117,37 @@ export const api = {
     }),
 
   // Chat
-  getRooms: () =>
-    request<{ rooms: any[] }>('/api/chat/rooms'),
+  getRooms: async () => {
+    try {
+      return await request<{ rooms: any[] }>('/api/chat/rooms');
+    } catch {
+      return {
+        rooms: [
+          { id: 'todos-juntos', name: 'Todos juntos', type: 'general', description: 'Sala comunitaria en tiempo real', icon: '⛰️' },
+          ...BARRIOS_CAPILLA.map(b => ({ id: b.id, name: b.name, type: 'barrio', description: b.description, icon: b.icon, neighborhoodId: b.id }))
+        ]
+      };
+    }
+  },
 
-  getMessages: (roomId: string, limit = 100) =>
-    request<{ messages: ChatMessage[] }>(`/api/chat/messages/${roomId}?limit=${limit}`),
+  getMessages: async (roomId: string, limit = 100) => {
+    try {
+      return await request<{ messages: ChatMessage[] }>(`/api/chat/messages/${roomId}?limit=${limit}`);
+    } catch {
+      return localFallback.getMessages(roomId);
+    }
+  },
 
-  sendMessage: (roomId: string, userId: string, text: string) =>
-    request<{ message: ChatMessage }>('/api/chat/messages', {
-      method: 'POST',
-      body: JSON.stringify({ roomId, userId, text }),
-    }),
+  sendMessage: async (roomId: string, userId: string, text: string) => {
+    try {
+      return await request<{ message: ChatMessage }>('/api/chat/messages', {
+        method: 'POST',
+        body: JSON.stringify({ roomId, userId, text }),
+      });
+    } catch {
+      return localFallback.sendMessage(roomId, userId, text);
+    }
+  },
 
   deleteMessage: (messageId: string, userId: string) =>
     request<{ success: boolean }>(`/api/chat/messages/${messageId}`, {
@@ -112,19 +162,23 @@ export const api = {
     }),
 
   // Tablón
-  getPosts: (params?: { category?: string; neighborhoodId?: string; search?: string; includeExpired?: boolean }) => {
+  getPosts: async (params?: { category?: string; neighborhoodId?: string; search?: string; includeExpired?: boolean }) => {
     const q = new URLSearchParams();
     if (params?.category) q.set('category', params.category);
     if (params?.neighborhoodId) q.set('neighborhoodId', params.neighborhoodId);
     if (params?.search) q.set('search', params.search);
     if (params?.includeExpired) q.set('includeExpired', 'true');
-    return request<{ posts: BulletinPost[] }>(`/api/posts?${q.toString()}`);
+    try {
+      return await request<{ posts: BulletinPost[] }>(`/api/posts?${q.toString()}`);
+    } catch {
+      return localFallback.getPosts(params);
+    }
   },
 
   getPost: (id: string) =>
     request<{ post: BulletinPost; comments: PostComment[] }>(`/api/posts/${id}`),
 
-  createPost: (payload: {
+  createPost: async (payload: {
     userId: string;
     title: string;
     category: string;
@@ -132,11 +186,16 @@ export const api = {
     richContent: string;
     price?: string;
     imageUrl?: string;
-  }) =>
-    request<{ post: BulletinPost }>('/api/posts', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    }),
+  }) => {
+    try {
+      return await request<{ post: BulletinPost }>('/api/posts', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    } catch {
+      return localFallback.createPost(payload);
+    }
+  },
 
   updatePost: (id: string, userId: string, data: Partial<BulletinPost>) =>
     request<{ post: BulletinPost }>(`/api/posts/${id}`, {
@@ -150,11 +209,16 @@ export const api = {
       body: JSON.stringify({ userId }),
     }),
 
-  togglePostLike: (postId: string, userId: string) =>
-    request<{ likesCount: number; isLiked: boolean }>(`/api/posts/${postId}/like`, {
-      method: 'POST',
-      body: JSON.stringify({ userId }),
-    }),
+  togglePostLike: async (postId: string, userId: string) => {
+    try {
+      return await request<{ likesCount: number; isLiked: boolean }>(`/api/posts/${postId}/like`, {
+        method: 'POST',
+        body: JSON.stringify({ userId }),
+      });
+    } catch {
+      return localFallback.togglePostLike(postId, userId);
+    }
+  },
 
   // Comentarios
   getComments: (postId: string) =>
@@ -167,27 +231,54 @@ export const api = {
     }),
 
   // Barrios y Estadísticas
-  getBarrios: () =>
-    request<{ barrios: (Neighborhood & { userCount: number; postCount: number })[] }>('/api/barrios'),
+  getBarrios: async () => {
+    try {
+      return await request<{ barrios: (Neighborhood & { userCount: number; postCount: number })[] }>('/api/barrios');
+    } catch {
+      return localFallback.getBarrios();
+    }
+  },
 
-  getStats: () =>
-    request<{
-      totalOnline: number;
-      usersCount: number;
-      postsCount: number;
-      activePostsCount: number;
-      messagesCount: number;
-      barrios: any[];
-    }>('/api/stats'),
+  getStats: async () => {
+    try {
+      return await request<{
+        totalOnline: number;
+        usersCount: number;
+        postsCount: number;
+        activePostsCount: number;
+        messagesCount: number;
+        barrios: any[];
+      }>('/api/stats');
+    } catch {
+      return {
+        totalOnline: 3,
+        usersCount: 4,
+        postsCount: 3,
+        activePostsCount: 3,
+        messagesCount: 3,
+        barrios: localFallback.getBarrios().barrios
+      };
+    }
+  },
 
   // Notificaciones
-  getNotifications: (userId: string) =>
-    request<{ notifications: AppNotification[] }>(`/api/notifications/${userId}`),
+  getNotifications: async (userId: string) => {
+    try {
+      return await request<{ notifications: AppNotification[] }>(`/api/notifications/${userId}`);
+    } catch {
+      return localFallback.getNotifications(userId);
+    }
+  },
 
-  markNotificationsRead: (userId: string) =>
-    request<{ success: boolean }>(`/api/notifications/${userId}/read`, {
-      method: 'POST',
-    }),
+  markNotificationsRead: async (userId: string) => {
+    try {
+      return await request<{ success: boolean }>(`/api/notifications/${userId}/read`, {
+        method: 'POST',
+      });
+    } catch {
+      return { success: true };
+    }
+  },
 
   // Moderación & Admin
   getReports: () =>

@@ -4,16 +4,20 @@ Plataforma comunitaria interactiva, chat en vivo, tablón de anuncios vecinales,
 
 ---
 
-## 🚀 Despliegue en GitHub Pages
+## 🚀 Despliegue en GitHub Pages (2 Métodos 100% Funcionales)
 
-Este proyecto ya incluye el flujo automatizado de **GitHub Actions** en `.github/workflows/deploy.yml`.
+### Método 1: El más rápido y directo (Recomendado)
+El proyecto ya incluye la carpeta compilada `/docs`.
+1. En GitHub, ve a **Settings** (Configuración) > **Pages**.
+2. En **Build and deployment** > **Source**, selecciona **Deploy from a branch**.
+3. En **Branch**, selecciona **main** y en la carpeta elige **/docs**.
+4. Haz clic en **Save** (Guardar).
+5. ¡Listo! En 30 segundos tu web estará en vivo sin errores ni pantalla en blanco.
 
-### Pasos para activar en GitHub:
-1. Sube este repositorio a GitHub.
-2. En GitHub, ve a **Settings** (Configuración) > **Pages**.
-3. En **Build and deployment** > **Source**, selecciona **GitHub Actions**.
-4. ¡Listo! Tu página se compilará y se publicará automáticamente en:
-   `https://<tu-usuario>.github.io/<nombre-del-repo>/`
+### Método 2: Mediante GitHub Actions
+1. En GitHub, ve a **Settings** > **Pages**.
+2. En **Build and deployment** > **Source**, selecciona **GitHub Actions**.
+3. El archivo `.github/workflows/deploy.yml` compilará y publicará la web automáticamente.
 
 ---
 

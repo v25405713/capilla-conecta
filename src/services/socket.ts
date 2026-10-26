@@ -34,6 +34,10 @@ export function getSocket(): Socket {
       console.log('[Socket] Conectado en tiempo real al servidor de Capilla Conecta');
     });
 
+    socket.on('connect_error', () => {
+      // Manejo silencioso en hostings estáticos como GitHub Pages
+    });
+
     socket.on('disconnect', () => {
       console.log('[Socket] Desconectado temporalmente, reintentando...');
     });

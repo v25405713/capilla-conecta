@@ -157,8 +157,8 @@ export default function App() {
             onMarkNotificationsRead={handleMarkNotificationsRead}
           />
 
-          {/* Contenido Principal con padding inferior seguro para barra móvil */}
-          <main className="flex-1 flex flex-col w-full max-w-7xl mx-auto p-2 sm:p-4 md:p-6 pb-24 md:pb-6 overflow-hidden">
+          {/* Contenido Principal con espaciado superior e inferior seguro */}
+          <main className="flex-1 flex flex-col w-full max-w-7xl mx-auto px-2 sm:px-4 md:px-6 pt-3 sm:pt-5 pb-24 md:pb-8">
             
             {/* PESTAÑA: CHAT COMUNITARIO */}
             {activeTab === 'chat' && (

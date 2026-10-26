@@ -2,8 +2,15 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <script>
+      // If served directly from repository root on GitHub Pages without compilation, redirect to pre-built /docs/ bundle
+      if (typeof window !== 'undefined' && location.hostname.includes('github.io') && !location.pathname.includes('/docs')) {
+        const cleanPath = location.pathname.endsWith('/') ? location.pathname : location.pathname + '/';
+        location.replace(cleanPath + 'docs/' + location.search + location.hash);
+      } else if (typeof window !== 'undefined' && location.hostname.includes('github.io') && location.pathname.length > 1 && !location.pathname.endsWith('/') && !location.pathname.split('/').pop().includes('.')) {
+        location.replace(location.pathname + '/' + location.search + location.hash);
+      }
       // Ignore Vite HMR WebSocket errors per AI Studio runtime guidelines (HMR is disabled)
       (function() {
         const origError = console.error;
