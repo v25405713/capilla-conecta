@@ -7,27 +7,20 @@ export function getSocket(): Socket {
   if (!socket) {
     let socketUrl: string | undefined = undefined;
 
-    if (typeof window !== 'undefined') {
-      const envUrl = (import.meta as any).env?.VITE_API_URL;
-      if (envUrl) {
-        socketUrl = envUrl;
-      } else if (window.location.hostname.includes('github.io')) {
-        socketUrl = 'https://ais-pre-v3yeffnghbqzf3xhauqokz-663102456098.us-east1.run.app';
-      } else if (window.location.protocol !== 'http:' && window.location.protocol !== 'https:') {
-        socketUrl = localStorage.getItem('capilla_server_url') || 'https://ais-pre-v3yeffnghbqzf3xhauqokz-663102456098.us-east1.run.app';
-      }
+    const isStatic = typeof window !== 'undefined' && window.location.hostname.includes('github.io');
+    const customUrl = typeof window !== 'undefined'
+      ? (import.meta as any).env?.VITE_API_URL || localStorage.getItem('capilla_server_url')
+      : undefined;
+
+    if (customUrl) {
+      socketUrl = customUrl;
     }
 
-    socket = socketUrl ? io(socketUrl, {
-      autoConnect: true,
+    socket = io(socketUrl || '', {
+      autoConnect: !isStatic || Boolean(customUrl),
       transports: ['polling', 'websocket'],
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
-    }) : io({
-      autoConnect: true,
-      transports: ['polling', 'websocket'],
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
+      reconnectionAttempts: 3,
+      reconnectionDelay: 2000,
     });
 
     socket.on('connect', () => {

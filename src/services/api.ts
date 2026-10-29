@@ -9,53 +9,49 @@ import {
   BARRIOS_CAPILLA
 } from '../types';
 
+export function isStaticEnvironment(): boolean {
+  if (typeof window === 'undefined') return false;
+  const hasCustomServer = Boolean(
+    (import.meta as any).env?.VITE_API_URL || localStorage.getItem('capilla_server_url')
+  );
+  return window.location.hostname.includes('github.io') && !hasCustomServer;
+}
+
 export function getBaseUrl(): string {
   if (typeof window !== 'undefined') {
-    // 1. Variable de entorno si se define en build
     const envUrl = (import.meta as any).env?.VITE_API_URL;
     if (envUrl) return envUrl.replace(/\/$/, '');
 
-    // 2. Servidor configurado manualmente por el usuario
     const saved = localStorage.getItem('capilla_server_url');
     if (saved) return saved.replace(/\/$/, '');
 
-    // 3. Si se aloja en GitHub Pages (solo frontend estático), conectar al backend en la nube
-    if (window.location.hostname.includes('github.io')) {
-      return 'https://ais-pre-v3yeffnghbqzf3xhauqokz-663102456098.us-east1.run.app';
-    }
-
-    // 4. Si se corre local o en un servidor con Node/Express integrado
     if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
       return '';
     }
   }
-  return 'https://ais-pre-v3yeffnghbqzf3xhauqokz-663102456098.us-east1.run.app';
+  return '';
 }
 
 import { localFallback } from './localFallback';
 
 async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const url = endpoint.startsWith('http') ? endpoint : `${getBaseUrl()}${endpoint}`;
-  try {
-    const res = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
-      ...options,
-    });
-
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Ocurrió un error en el servidor');
-    }
-    return data;
-  } catch (err: any) {
-    // Si la llamada de red falla (CORS o alojamiento 100% estático en GitHub Pages sin servidor),
-    // responder con el fallback local para que la app NUNCA quede en blanco.
-    console.warn(`[API] Servidor no disponible para ${endpoint}, utilizando almacenamiento local de respaldo.`, err);
-    throw err;
+  if (isStaticEnvironment()) {
+    throw new Error('Static host - fallback to local');
   }
+  const url = endpoint.startsWith('http') ? endpoint : `${getBaseUrl()}${endpoint}`;
+  const res = await fetch(url, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
+    ...options,
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || 'Ocurrió un error en el servidor');
+  }
+  return data;
 }
 
 export const api = {
@@ -110,11 +106,16 @@ export const api = {
     }
   },
 
-  updateProfile: (userId: string, data: Partial<User>) =>
-    request<{ user: User }>(`/api/auth/profile/${userId}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    }),
+  updateProfile: async (userId: string, data: Partial<User>) => {
+    try {
+      return await request<{ user: User }>(`/api/auth/profile/${userId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    } catch {
+      return localFallback.updateProfile(userId, data);
+    }
+  },
 
   // Chat
   getRooms: async () => {
@@ -149,17 +150,27 @@ export const api = {
     }
   },
 
-  deleteMessage: (messageId: string, userId: string) =>
-    request<{ success: boolean }>(`/api/chat/messages/${messageId}`, {
-      method: 'DELETE',
-      body: JSON.stringify({ userId }),
-    }),
+  deleteMessage: async (messageId: string, userId: string) => {
+    try {
+      return await request<{ success: boolean }>(`/api/chat/messages/${messageId}`, {
+        method: 'DELETE',
+        body: JSON.stringify({ userId }),
+      });
+    } catch {
+      return localFallback.deleteMessage(messageId, userId);
+    }
+  },
 
-  reportMessage: (messageId: string, reporterId: string, reason: string) =>
-    request<{ success: boolean }>('/api/chat/report', {
-      method: 'POST',
-      body: JSON.stringify({ messageId, reporterId, reason }),
-    }),
+  reportMessage: async (messageId: string, reporterId: string, reason: string) => {
+    try {
+      return await request<{ success: boolean }>('/api/chat/report', {
+        method: 'POST',
+        body: JSON.stringify({ messageId, reporterId, reason }),
+      });
+    } catch {
+      return localFallback.reportMessage(messageId, reporterId, reason);
+    }
+  },
 
   // Tablón
   getPosts: async (params?: { category?: string; neighborhoodId?: string; search?: string; includeExpired?: boolean }) => {
@@ -175,8 +186,13 @@ export const api = {
     }
   },
 
-  getPost: (id: string) =>
-    request<{ post: BulletinPost; comments: PostComment[] }>(`/api/posts/${id}`),
+  getPost: async (id: string) => {
+    try {
+      return await request<{ post: BulletinPost; comments: PostComment[] }>(`/api/posts/${id}`);
+    } catch {
+      return localFallback.getPost(id);
+    }
+  },
 
   createPost: async (payload: {
     userId: string;
@@ -197,17 +213,27 @@ export const api = {
     }
   },
 
-  updatePost: (id: string, userId: string, data: Partial<BulletinPost>) =>
-    request<{ post: BulletinPost }>(`/api/posts/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ userId, ...data }),
-    }),
+  updatePost: async (id: string, userId: string, data: Partial<BulletinPost>) => {
+    try {
+      return await request<{ post: BulletinPost }>(`/api/posts/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ userId, ...data }),
+      });
+    } catch {
+      return localFallback.updatePost(id, userId, data);
+    }
+  },
 
-  deletePost: (id: string, userId: string) =>
-    request<{ success: boolean }>(`/api/posts/${id}`, {
-      method: 'DELETE',
-      body: JSON.stringify({ userId }),
-    }),
+  deletePost: async (id: string, userId: string) => {
+    try {
+      return await request<{ success: boolean }>(`/api/posts/${id}`, {
+        method: 'DELETE',
+        body: JSON.stringify({ userId }),
+      });
+    } catch {
+      return localFallback.deletePost(id, userId);
+    }
+  },
 
   togglePostLike: async (postId: string, userId: string) => {
     try {
@@ -221,14 +247,24 @@ export const api = {
   },
 
   // Comentarios
-  getComments: (postId: string) =>
-    request<{ comments: PostComment[] }>(`/api/posts/${postId}/comments`),
+  getComments: async (postId: string) => {
+    try {
+      return await request<{ comments: PostComment[] }>(`/api/posts/${postId}/comments`);
+    } catch {
+      return localFallback.getComments(postId);
+    }
+  },
 
-  addComment: (postId: string, userId: string, text: string) =>
-    request<{ comment: PostComment }>(`/api/posts/${postId}/comments`, {
-      method: 'POST',
-      body: JSON.stringify({ userId, text }),
-    }),
+  addComment: async (postId: string, userId: string, text: string) => {
+    try {
+      return await request<{ comment: PostComment }>(`/api/posts/${postId}/comments`, {
+        method: 'POST',
+        body: JSON.stringify({ userId, text }),
+      });
+    } catch {
+      return localFallback.addComment(postId, userId, text);
+    }
+  },
 
   // Barrios y Estadísticas
   getBarrios: async () => {

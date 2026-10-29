@@ -11,34 +11,98 @@
       } else if (typeof window !== 'undefined' && location.hostname.includes('github.io') && location.pathname.length > 1 && !location.pathname.endsWith('/') && !location.pathname.split('/').pop().includes('.')) {
         location.replace(location.pathname + '/' + location.search + location.hash);
       }
-      // Ignore Vite HMR WebSocket errors per AI Studio runtime guidelines (HMR is disabled)
+      // AI Studio Runtime: HMR is disabled in preview iframe.
+      // Intercept 'vite-hmr' WebSocket to prevent 'WebSocket closed without opened' uncaught rejections.
+      (function() {
+        if (typeof window !== 'undefined' && window.WebSocket) {
+          const NativeWebSocket = window.WebSocket;
+          const PatchedWebSocket = function(url, protocols) {
+            const isViteHmr = protocols === 'vite-hmr' || (Array.isArray(protocols) && protocols.includes('vite-hmr')) || String(url).includes('vite-hmr');
+            if (isViteHmr) {
+              const target = new EventTarget();
+              const dummy = {
+                readyState: 1, // OPEN
+                OPEN: 1,
+                CONNECTING: 0,
+                CLOSING: 2,
+                CLOSED: 3,
+                url: String(url),
+                protocol: 'vite-hmr',
+                bufferedAmount: 0,
+                extensions: '',
+                binaryType: 'blob',
+                onopen: null,
+                onclose: null,
+                onerror: null,
+                onmessage: null,
+                send: function() {},
+                close: function() {},
+                addEventListener: function(type, listener, options) {
+                  target.addEventListener(type, listener, options);
+                  if (type === 'open') {
+                    setTimeout(function() {
+                      const ev = new Event('open');
+                      target.dispatchEvent(ev);
+                      if (typeof dummy.onopen === 'function') dummy.onopen(ev);
+                    }, 0);
+                  }
+                },
+                removeEventListener: function(type, listener, options) {
+                  target.removeEventListener(type, listener, options);
+                },
+                dispatchEvent: function(ev) {
+                  return target.dispatchEvent(ev);
+                }
+              };
+              return dummy;
+            }
+            return new NativeWebSocket(url, protocols);
+          };
+          PatchedWebSocket.prototype = NativeWebSocket.prototype;
+          PatchedWebSocket.OPEN = NativeWebSocket.OPEN;
+          PatchedWebSocket.CONNECTING = NativeWebSocket.CONNECTING;
+          PatchedWebSocket.CLOSING = NativeWebSocket.CLOSING;
+          PatchedWebSocket.CLOSED = NativeWebSocket.CLOSED;
+          window.WebSocket = PatchedWebSocket;
+        }
+      })();
+      // Ignore Vite HMR WebSocket errors per AI Studio runtime guidelines (HMR is disabled in preview iframe)
       (function() {
         const origError = console.error;
+        const origWarn = console.warn;
+        function isViteWsError(args) {
+          return args.some(function(a) {
+            if (!a) return false;
+            const s = typeof a === 'string' ? a : String(a.message || a.stack || a);
+            return s.includes('WebSocket') || s.includes('closed without opened') || s.includes('server connection lost') || s.includes('@vite/client');
+          });
+        }
         console.error = function(...args) {
-          const str = args.map(a => (typeof a === 'string' ? a : (a && a.message) || '')).join(' ');
-          if (str.includes('WebSocket') && (str.includes('vite') || str.includes('opened') || str.includes('closed'))) {
-            return;
-          }
+          if (isViteWsError(args)) return;
           origError.apply(console, args);
+        };
+        console.warn = function(...args) {
+          if (isViteWsError(args)) return;
+          origWarn.apply(console, args);
         };
       })();
       window.addEventListener('unhandledrejection', function(event) {
-        if (event.reason && (
-          String(event.reason.message || '').includes('WebSocket') ||
-          String(event.reason.message || '').includes('vite') ||
-          String(event.reason.stack || '').includes('@vite/client')
-        )) {
+        const r = event.reason;
+        const msg = String((r && (r.message || r.stack)) || r || '');
+        if (msg.includes('WebSocket') || msg.includes('closed without opened') || msg.includes('vite') || msg.includes('@vite/client')) {
           event.preventDefault();
+          event.stopImmediatePropagation();
         }
-      });
+      }, true);
       window.addEventListener('error', function(event) {
-        if (
-          String(event.message || '').includes('WebSocket') ||
-          String(event.filename || '').includes('@vite/client')
-        ) {
+        const msg = String(event.message || (event.error && (event.error.message || event.error.stack)) || '');
+        const filename = String(event.filename || '');
+        if (msg.includes('WebSocket') || msg.includes('closed without opened') || filename.includes('@vite/client')) {
           event.preventDefault();
+          event.stopImmediatePropagation();
+          return true;
         }
-      });
+      }, true);
     </script>
     <title>Capilla Conecta</title>
     <meta name="description" content="Chat en tiempo real y tablón de anuncios comunitario para los vecinos de Capilla del Monte, Córdoba, Argentina." />
@@ -50,8 +114,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="CapillaConecta" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <link rel="icon" type="image/svg+xml" href="icon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />

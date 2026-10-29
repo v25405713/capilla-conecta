@@ -422,5 +422,84 @@ export const localFallback = {
   getNotifications(userId: string): { notifications: AppNotification[] } {
     const db = getLocalData();
     return { notifications: db.notifications.filter(n => n.userId === userId) };
+  },
+
+  updateProfile(userId: string, data: Partial<User>): { user: User } {
+    const db = getLocalData();
+    const idx = db.users.findIndex(u => u.id === userId);
+    if (idx !== -1) {
+      db.users[idx] = { ...db.users[idx], ...data };
+      saveLocalData(db);
+      return { user: db.users[idx] };
+    }
+    return { user: db.users[0] };
+  },
+
+  deleteMessage(messageId: string, _userId: string): { success: boolean } {
+    const db = getLocalData();
+    db.chatMessages = db.chatMessages.filter(m => m.id !== messageId);
+    saveLocalData(db);
+    return { success: true };
+  },
+
+  reportMessage(messageId: string, _reporterId: string, _reason: string): { success: boolean } {
+    const db = getLocalData();
+    const msg = db.chatMessages.find(m => m.id === messageId);
+    if (msg) msg.isReported = true;
+    saveLocalData(db);
+    return { success: true };
+  },
+
+  getPost(id: string): { post: BulletinPost; comments: PostComment[] } {
+    const db = getLocalData();
+    const post = db.posts.find(p => p.id === id) || db.posts[0];
+    const comments = (db.comments || []).filter(c => c.postId === id);
+    return { post, comments };
+  },
+
+  updatePost(id: string, _userId: string, data: Partial<BulletinPost>): { post: BulletinPost } {
+    const db = getLocalData();
+    const idx = db.posts.findIndex(p => p.id === id);
+    if (idx !== -1) {
+      db.posts[idx] = { ...db.posts[idx], ...data, editedAt: new Date().toISOString() };
+      saveLocalData(db);
+      return { post: db.posts[idx] };
+    }
+    return { post: db.posts[0] };
+  },
+
+  deletePost(id: string, _userId: string): { success: boolean } {
+    const db = getLocalData();
+    const post = db.posts.find(p => p.id === id);
+    if (post) post.isDeleted = true;
+    saveLocalData(db);
+    return { success: true };
+  },
+
+  getComments(postId: string): { comments: PostComment[] } {
+    const db = getLocalData();
+    const comments = (db.comments || []).filter(c => c.postId === postId);
+    return { comments };
+  },
+
+  addComment(postId: string, userId: string, text: string): { comment: PostComment } {
+    const db = getLocalData();
+    const user = db.users.find(u => u.id === userId) || db.users[0];
+    const comment: PostComment = {
+      id: 'cmt_' + Date.now(),
+      postId,
+      userId: user.id,
+      authorName: getFormattedUserName(user),
+      authorAvatar: user.avatarEmoji,
+      authorNeighborhood: user.neighborhoodId,
+      text,
+      createdAt: new Date().toISOString()
+    };
+    if (!db.comments) db.comments = [];
+    db.comments.push(comment);
+    const post = db.posts.find(p => p.id === postId);
+    if (post) post.commentsCount = (post.commentsCount || 0) + 1;
+    saveLocalData(db);
+    return { comment };
   }
 };

@@ -3,7 +3,6 @@ import { User, AppNotification, OnlineUser } from './types';
 import { Header } from './components/Header';
 import { AuthModal } from './components/AuthModal';
 import { ChatView } from './components/ChatView';
-import { ConnectedUsersPanel } from './components/ConnectedUsersPanel';
 import { BulletinBoard } from './components/BulletinBoard';
 import { BarriosDirectory } from './components/BarriosDirectory';
 import { ProfileModal } from './components/ProfileModal';
@@ -160,22 +159,14 @@ export default function App() {
           {/* Contenido Principal con espaciado superior e inferior seguro */}
           <main className="flex-1 flex flex-col w-full max-w-7xl mx-auto px-2 sm:px-4 md:px-6 pt-3 sm:pt-5 pb-24 md:pb-8">
             
-            {/* PESTAÑA: CHAT COMUNITARIO */}
+            {/* PESTAÑA: CHAT COMUNITARIO (100% Pantalla Completa y Ancho) */}
             {activeTab === 'chat' && (
-              <div className="flex-1 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 h-full">
-                <div className="md:col-span-2 lg:col-span-3 h-full">
-                  <ChatView
-                    currentUser={currentUser}
-                    initialRoomId={chatRoomId}
-                    onSelectUser={u => setSelectedPublicUserId(u.id)}
-                  />
-                </div>
-                <div className="hidden md:block md:col-span-1 h-full">
-                  <ConnectedUsersPanel
-                    currentRoomId={chatRoomId}
-                    onSelectUser={u => setSelectedPublicUserId(u.id)}
-                  />
-                </div>
+              <div className="flex-1 flex flex-col w-full h-[calc(100dvh-8rem)] md:h-[calc(100dvh-5.5rem)]">
+                <ChatView
+                  currentUser={currentUser}
+                  initialRoomId={chatRoomId}
+                  onSelectUser={u => setSelectedPublicUserId(u.id)}
+                />
               </div>
             )}
 
@@ -190,36 +181,28 @@ export default function App() {
 
             {/* PESTAÑA: MI BARRIO (Acceso rápido a chat y anuncios de tu barrio) */}
             {activeTab === 'mibarrio' && (
-              <div className="space-y-6">
-                <div className="bg-teal-700 text-white rounded-2xl p-6 shadow-md flex items-center justify-between">
+              <div className="flex-1 flex flex-col w-full space-y-3 sm:space-y-4">
+                <div className="bg-teal-700 text-white rounded-2xl p-4 sm:p-5 shadow-md flex items-center justify-between shrink-0">
                   <div>
-                    <span className="text-xs uppercase font-bold tracking-wider text-teal-200">
+                    <span className="text-[11px] uppercase font-bold tracking-wider text-teal-200">
                       Espacio Vecinal Exclusivo
                     </span>
-                    <h2 className="text-2xl font-bold tracking-tight mt-1">
+                    <h2 className="text-lg sm:text-xl font-bold tracking-tight mt-0.5">
                       Mi Barrio: {currentUser.neighborhoodId.replace(/-/g, ' ').toUpperCase()}
                     </h2>
-                    <p className="text-xs text-teal-100 mt-1">
+                    <p className="text-xs text-teal-100 mt-0.5">
                       Conectate directamente con los vecinos de tu calle y tu sector en Capilla del Monte.
                     </p>
                   </div>
-                  <div className="text-4xl">⛰️</div>
+                  <div className="text-3xl sm:text-4xl">⛰️</div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-                  <div className="md:col-span-2 lg:col-span-3">
-                    <ChatView
-                      currentUser={currentUser}
-                      initialRoomId={currentUser.neighborhoodId}
-                      onSelectUser={u => setSelectedPublicUserId(u.id)}
-                    />
-                  </div>
-                  <div className="hidden md:block md:col-span-1">
-                    <ConnectedUsersPanel
-                      currentRoomId={currentUser.neighborhoodId}
-                      onSelectUser={u => setSelectedPublicUserId(u.id)}
-                    />
-                  </div>
+                <div className="flex-1 flex flex-col w-full h-[calc(100dvh-15rem)] md:h-[calc(100dvh-12rem)] min-h-[460px]">
+                  <ChatView
+                    currentUser={currentUser}
+                    initialRoomId={currentUser.neighborhoodId}
+                    onSelectUser={u => setSelectedPublicUserId(u.id)}
+                  />
                 </div>
               </div>
             )}

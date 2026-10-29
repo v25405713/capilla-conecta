@@ -485,11 +485,20 @@ export const BulletinBoard: React.FC<BulletinBoardProps> = ({
                       </span>
                     )}
 
-                    {/* Contador de 10 min de edición exclusivo para el autor */}
+                    {/* Contador de 10 min de edición interactivo exclusivo para el autor */}
                     {isAuthor && editCountdown && (
-                      <span className="font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
-                        Podés editar: {editCountdown} min
-                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingPost(post);
+                          setShowCreateModal(true);
+                        }}
+                        className="inline-flex items-center gap-1.5 font-bold text-xs text-amber-800 dark:text-amber-200 bg-amber-100 dark:bg-amber-950/80 hover:bg-amber-200 dark:hover:bg-amber-900 px-3 py-1 rounded-full border border-amber-300 dark:border-amber-700 shadow-xs hover:scale-105 active:scale-95 transition cursor-pointer"
+                        title="Toca aquí para editar tu anuncio"
+                      >
+                        <Edit2 className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 animate-pulse" />
+                        <span>✏️ Tocar para editar ({editCountdown} min)</span>
+                      </button>
                     )}
                   </div>
 
@@ -555,15 +564,15 @@ export const BulletinBoard: React.FC<BulletinBoardProps> = ({
                     {/* Acciones exclusivas del Autor */}
                     {isAuthor && (
                       <div className="flex items-center gap-1">
-                        {/* Editar: solo visible durante los primeros 10 min o para staff */}
+                        {/* Editar: visible durante los primeros 10 min o para staff */}
                         {canEdit && (
                           <button
                             onClick={() => { setEditingPost(post); setShowCreateModal(true); }}
-                            className="p-1.5 text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                            className="px-2.5 py-1 text-teal-800 dark:text-teal-200 bg-teal-50 dark:bg-teal-950/60 hover:bg-teal-100 dark:hover:bg-teal-900 border border-teal-200 dark:border-teal-800 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-2xs transition"
                             title="Editar texto del cartel"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline">Editar</span>
+                            <span>Editar</span>
                           </button>
                         )}
 

@@ -26,6 +26,8 @@ export const MobileInstallModal: React.FC<MobileInstallModalProps> = ({ onClose 
     isIOS ? 'ios' : 'direct'
   );
   const [copiedLink, setCopiedLink] = useState(false);
+  const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [manualGuideTriggered, setManualGuideTriggered] = useState(false);
 
   const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://capillaconecta.app';
   const pwaBuilderUrl = `https://www.pwabuilder.com/reportcard?site=${encodeURIComponent(currentOrigin)}`;
@@ -34,6 +36,83 @@ export const MobileInstallModal: React.FC<MobileInstallModalProps> = ({ onClose 
     navigator.clipboard.writeText(currentOrigin);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2500);
+  };
+
+  const handleDownloadLauncher = () => {
+    const origin = typeof window !== 'undefined' ? window.location.href : 'https://capillaconecta.app';
+    const htmlContent = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0d9488">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Capilla Conecta">
+  <title>Capilla Conecta</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #134e4a 100%);
+      color: #ffffff;
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 24px;
+      padding: 32px 24px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      backdrop-filter: blur(12px);
+    }
+    .icon { font-size: 54px; margin-bottom: 12px; }
+    h1 { margin: 0; font-size: 24px; font-weight: 800; }
+    p { color: #cbd5e1; font-size: 14px; margin: 12px 0 24px; line-height: 1.5; }
+    .btn {
+      display: block;
+      background: #0d9488;
+      color: #ffffff;
+      text-decoration: none;
+      padding: 14px 24px;
+      border-radius: 14px;
+      font-weight: bold;
+      font-size: 16px;
+      box-shadow: 0 4px 14px rgba(13, 148, 136, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">⛰️</div>
+    <h1>Capilla Conecta</h1>
+    <p>Red comunitaria de los 20 barrios de Capilla del Monte, Córdoba.</p>
+    <a class="btn" href="${origin}">Ingresar a la Red</a>
+  </div>
+  <script>
+    setTimeout(function() { window.location.href = "${origin}"; }, 300);
+  </script>
+</body>
+</html>`;
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'CapillaConecta.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setDownloadSuccess(true);
+    setTimeout(() => setDownloadSuccess(false), 4000);
   };
 
   return (
@@ -130,28 +209,64 @@ export const MobileInstallModal: React.FC<MobileInstallModalProps> = ({ onClose 
                 </div>
               </div>
 
-              {/* Botón de 1-Clic si el navegador soporta el trigger */}
-              {isInstallable ? (
-                <div className="p-4 rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950/40 dark:to-emerald-950/40 border border-teal-200 dark:border-teal-800 text-center space-y-2">
-                  <button
-                    onClick={async () => {
+              {/* Caja de Acción Principal Siempre Visible */}
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-teal-50 via-emerald-50 to-teal-100/60 dark:from-teal-950/60 dark:via-emerald-950/40 dark:to-teal-900/40 border border-teal-200 dark:border-teal-800 text-center space-y-3 shadow-xs">
+                {isInstalled && (
+                  <div className="p-2.5 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 border border-emerald-300 dark:border-emerald-700 text-center text-xs text-emerald-900 dark:text-emerald-200 font-bold mb-1">
+                    ✅ ¡Capilla Conecta ya está instalada en tu dispositivo!
+                  </div>
+                )}
+
+                {/* Botón 1: Instalación Nativa en el Sistema */}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (isInstallable) {
                       const success = await install();
                       if (success) onClose();
-                    }}
-                    className="w-full py-3 px-4 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-bold text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
+                    } else {
+                      setManualGuideTriggered(true);
+                      setTimeout(() => setManualGuideTriggered(false), 5000);
+                    }
+                  }}
+                  className="w-full py-3.5 px-4 rounded-xl bg-teal-700 hover:bg-teal-800 active:scale-98 text-white font-bold text-sm shadow-md transition flex items-center justify-center gap-2.5 cursor-pointer"
+                >
+                  <Smartphone className="w-4 h-4" />
+                  <span>Instalar App en este Celular / Tablet</span>
+                </button>
+                
+                <p className="text-[11px] text-teal-800 dark:text-teal-300 font-medium">
+                  {isInstallable
+                    ? 'Toca aquí y presiona "Instalar" en la ventana que aparece.'
+                    : 'Si tu navegador no muestra la ventana automática, sigue los 3 pasos de abajo tocando el menú (⋮) de tu navegador.'}
+                </p>
+
+                {/* Botón 2: Descarga Directa de Archivo de Acceso / Lanzador */}
+                <div className="pt-2.5 border-t border-teal-200/80 dark:border-teal-800/80 flex flex-col gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handleDownloadLauncher}
+                    className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-bold text-xs shadow-xs transition flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    <Smartphone className="w-4 h-4" />
-                    <span>Instalar Aplicación en este Dispositivo</span>
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Descargar Lanzador Web (.html)</span>
                   </button>
-                  <p className="text-[11px] text-teal-800 dark:text-teal-300">
-                    Toca aquí y presiona "Instalar" en la ventana que aparece.
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                    Baja un archivo liviano a tu teléfono que abre Capilla Conecta a pantalla completa sin errores de APK.
                   </p>
+                  {downloadSuccess && (
+                    <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-200 text-xs font-semibold animate-in fade-in">
+                      ✅ Archivo descargado en tu dispositivo. Búscalo en tus descargas para entrar.
+                    </div>
+                  )}
                 </div>
-              ) : isInstalled ? (
-                <div className="p-3.5 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 border border-emerald-300 dark:border-emerald-700 text-center text-xs text-emerald-900 dark:text-emerald-200 font-bold">
-                  ✅ ¡Capilla Conecta ya está instalada en tu dispositivo! Puedes abrirla desde tu pantalla de inicio o cajón de aplicaciones.
+              </div>
+
+              {manualGuideTriggered && (
+                <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 text-xs text-amber-900 dark:text-amber-200 animate-in fade-in slide-in-from-top-1">
+                  👉 <b>Paso clave:</b> Toca los 3 puntitos (⋮) arriba a la derecha de Google Chrome o Samsung Internet y pulsa <b>"Instalar aplicación"</b> o <b>"Agregar a la pantalla principal"</b>.
                 </div>
-              ) : null}
+              )}
 
               {/* Paso a paso visual para cualquier Android & Tablet */}
               <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4 space-y-3 bg-slate-50 dark:bg-slate-800/40">

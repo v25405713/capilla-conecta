@@ -25,8 +25,10 @@ import {
   AlertTriangle,
   AtSign,
   Info,
-  ChevronDown
+  ChevronDown,
+  X
 } from 'lucide-react';
+import { ConnectedUsersPanel } from './ConnectedUsersPanel';
 
 interface ChatViewProps {
   currentUser: User | null;
@@ -58,6 +60,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
   const [feedbackToast, setFeedbackToast] = useState<string | null>(null);
   const [deleteConfirmMessageId, setDeleteConfirmMessageId] = useState<string | null>(null);
+  const [showConnectedPanel, setShowConnectedPanel] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<any>(null);
@@ -67,6 +70,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const isGeneralRoom = currentRoomId === 'todos-juntos';
   const isUserResidentOfRoom = currentUser ? currentUser.neighborhoodId === currentRoomId : false;
   const isStaff = currentUser ? (currentUser.role === 'admin' || currentUser.role === 'moderator') : false;
+  // Regla barrial estricta: en la sala general todos pueden escribir; en las salas de barrio solo los vecinos residentes de ese barrio (o staff)
   const canPostInRoom = Boolean(currentUser) && (isGeneralRoom || isUserResidentOfRoom || isStaff);
 
   // Cargar mensajes al cambiar de sala
@@ -176,24 +180,66 @@ export const ChatView: React.FC<ChatViewProps> = ({
     }
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser) {
       onRequireAuth?.();
       return;
     }
-    if (!inputText.trim()) return;
+    const textToSend = inputText.trim();
+    if (!textToSend) return;
 
     if (!canPostInRoom) {
       setErrorBanner(`Solo los vecinos residentes de ${currentBarrioObj?.name} pueden enviar mensajes en esta sala.`);
       return;
     }
 
-    emitChatMessage(currentRoomId, currentUser.id, inputText.trim());
+    // Crear mensaje optimista inmediato para que aparezca al instante
+    const tempId = 'temp_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+    const optimisticMsg: ChatMessage = {
+      id: tempId,
+      roomId: currentRoomId,
+      userId: currentUser.id,
+      userName: getFormattedUserName(currentUser),
+      userAvatar: currentUser.avatarEmoji,
+      userNeighborhood: currentUser.neighborhoodId,
+      userRole: currentUser.role,
+      text: textToSend,
+      mentions: [],
+      reactions: {},
+      isReported: false,
+      isDeleted: false,
+      createdAt: new Date().toISOString()
+    };
+
+    // Actualizar pantalla inmediatamente
+    setMessages(prev => [...prev, optimisticMsg]);
     setInputText('');
     setShowEmojiPicker(false);
     setShowMentionSuggestions(false);
-    emitTyping(currentRoomId, currentUser.id, false);
+
+    // Scroll inmediato hacia abajo
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 60);
+
+    // Guardar en la base de datos o localStorage
+    try {
+      const res = await api.sendMessage(currentRoomId, currentUser.id, textToSend);
+      if (res && res.message) {
+        setMessages(prev => prev.map(m => (m.id === tempId ? res.message : m)));
+      }
+    } catch (err: any) {
+      console.warn('Fallback al guardar mensaje:', err);
+    }
+
+    // Emitir por WebSocket si está conectado
+    try {
+      emitChatMessage(currentRoomId, currentUser.id, textToSend);
+      emitTyping(currentRoomId, currentUser.id, false);
+    } catch {
+      // Ignorar si el socket está desconectado
+    }
   };
 
   const handleToggleReaction = (messageId: string, emoji: string) => {
@@ -240,10 +286,10 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const typingList = Object.values(typingUsers);
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-10rem)] md:h-[calc(100dvh-5.5rem)] max-w-5xl mx-auto w-full bg-white dark:bg-slate-900 md:rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+    <div className="flex flex-col h-full w-full bg-white dark:bg-slate-900 md:rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden relative">
       
-      {/* Barra Superior del Chat: Selector de Salas y Búsqueda */}
-      <div className="p-3 md:p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80 flex flex-wrap items-center justify-between gap-3 shrink-0">
+      {/* Barra Superior del Chat: Selector de Salas, Búsqueda y Vecinos */}
+      <div className="p-2.5 sm:p-3 md:p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80 flex flex-wrap items-center justify-between gap-2.5 shrink-0">
         
         {/* Selector de Salas */}
         <div className="flex items-center gap-2">
@@ -275,23 +321,38 @@ export const ChatView: React.FC<ChatViewProps> = ({
           </div>
         </div>
 
-        {/* Buscador de mensajes */}
+        {/* Acciones: Buscador de mensajes y Botón de Vecinos */}
         <div className="flex items-center gap-2">
-          <div className="relative w-36 sm:w-52">
+          <div className="relative w-32 sm:w-48">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
             <input
               type="text"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               placeholder="Buscar en el chat..."
-              className="w-full pl-8 pr-2 py-1 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-1 focus:ring-teal-500"
+              className="w-full pl-8 pr-2 py-1.5 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-1 focus:ring-teal-500"
             />
           </div>
+
+          <button
+            type="button"
+            onClick={() => setShowConnectedPanel(prev => !prev)}
+            className={`px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shrink-0 ${
+              showConnectedPanel
+                ? 'bg-teal-700 text-white border-teal-700 shadow-xs'
+                : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700'
+            }`}
+            title="Ver vecinos conectados"
+          >
+            <Users className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+            <span className="hidden sm:inline">Vecinos</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          </button>
         </div>
 
       </div>
 
-      {/* Banner de regla de sala de barrio (si solo vecinos pueden escribir) */}
+      {/* Banner de regla de sala de barrio (si solo residentes pueden escribir) */}
       {!isGeneralRoom && (
         <div className={`px-4 py-2 text-xs flex items-center justify-between border-b ${
           canPostInRoom
@@ -300,7 +361,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
         }`}>
           <div className="flex items-center gap-2">
             {canPostInRoom ? (
-              <span className="font-semibold">¡Sos vecino residente de {currentBarrioObj?.name}! Podés participar y escribir libremente.</span>
+              <span className="font-semibold">¡Sos vecino residente de Barrio {currentBarrioObj?.name}! Podés participar y escribir libremente.</span>
             ) : (
               <span className="flex items-center gap-1.5 font-medium">
                 <Lock className="w-3.5 h-3.5 shrink-0" />
@@ -318,8 +379,14 @@ export const ChatView: React.FC<ChatViewProps> = ({
         </div>
       )}
 
-      {/* Lista de Mensajes */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      {/* Contenedor Principal Flexible (100% ancho) */}
+      <div className="flex-1 flex overflow-hidden relative">
+        
+        {/* Columna de Chat Principal */}
+        <div className="flex-1 flex flex-col h-full overflow-hidden">
+          
+          {/* Lista de Mensajes */}
+          <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3">
         {loading ? (
           <div className="flex flex-col items-center justify-center h-48 text-slate-400 gap-2">
             <div className="w-6 h-6 border-2 border-teal-600 border-t-transparent rounded-full animate-spin" />
@@ -548,16 +615,16 @@ export const ChatView: React.FC<ChatViewProps> = ({
               placeholder={
                 canPostInRoom
                   ? `Escribe en ${isGeneralRoom ? 'Todos juntos' : 'Barrio ' + currentBarrioObj?.name}... (usa @ para mencionar)`
-                  : `Solo vecinos residentes de ${currentBarrioObj?.name} pueden escribir aquí.`
+                  : `Solo los vecinos residentes de ${currentBarrioObj?.name} pueden escribir aquí.`
               }
-              className="flex-1 px-4 py-2.5 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-teal-500 disabled:bg-slate-100 dark:disabled:bg-slate-800/40 disabled:text-slate-400"
+              className="flex-1 px-4 py-2.5 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-teal-500 disabled:bg-slate-100 dark:disabled:bg-slate-800/40 disabled:text-slate-400 disabled:cursor-not-allowed"
             />
 
             <button
               type="submit"
               disabled={!inputText.trim() || !canPostInRoom}
-              className="p-2.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-semibold shadow-xs disabled:opacity-40 transition-colors cursor-pointer shrink-0"
-              title="Enviar mensaje"
+              className="p-2.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-semibold shadow-xs disabled:opacity-40 transition-colors cursor-pointer shrink-0 disabled:cursor-not-allowed"
+              title={canPostInRoom ? "Enviar mensaje" : `Solo residentes de ${currentBarrioObj?.name}`}
             >
               <Send className="w-4 h-4" />
             </button>
@@ -565,6 +632,38 @@ export const ChatView: React.FC<ChatViewProps> = ({
         )}
 
       </div>
+    </div>
+
+    {/* Panel lateral deslizable de Vecinos Conectados */}
+    {showConnectedPanel && (
+      <div className="absolute inset-y-0 right-0 z-30 w-72 sm:w-80 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
+        <div className="p-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-850">
+          <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+            <Users className="w-3.5 h-3.5 text-teal-600" />
+            Vecinos en Capilla
+          </span>
+          <button
+            type="button"
+            onClick={() => setShowConnectedPanel(false)}
+            className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-hidden">
+          <ConnectedUsersPanel
+            currentRoomId={currentRoomId}
+            onSelectUser={(u: any) => onSelectUser({
+              id: u.id,
+              name: u.displayName || u.name,
+              avatar: u.avatarEmoji || u.avatar,
+              neighborhood: u.neighborhoodId
+            })}
+          />
+        </div>
+      </div>
+    )}
+  </div>
 
       {/* Modal de Reporte */}
       {reportModalMessage && (
