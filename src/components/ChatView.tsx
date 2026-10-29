@@ -108,6 +108,13 @@ export const ChatView: React.FC<ChatViewProps> = ({
   // Regla barrial estricta: en la sala general todos pueden escribir; en las salas de barrio solo los vecinos residentes de ese barrio (o staff)
   const canPostInRoom = Boolean(currentUser) && (isGeneralRoom || isUserResidentOfRoom || isStaff);
 
+  // Sincronizar sala cuando cambia initialRoomId desde props (ej. al tocar pestaña Chat -> vuelve a Sala General por defecto)
+  useEffect(() => {
+    if (initialRoomId) {
+      setCurrentRoomId(initialRoomId);
+    }
+  }, [initialRoomId]);
+
   // Cargar mensajes al cambiar de sala
   useEffect(() => {
     setLoading(true);
@@ -546,6 +553,25 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
       {/* Contenedor Principal Flexible (100% ancho) */}
       <div className="flex-1 min-h-0 flex overflow-hidden relative">
+        
+        {/* Botón flotante indicando que se encuentra en el chat de barrio */}
+        {!isGeneralRoom && (
+          <div className="absolute top-2.5 right-2.5 z-20 animate-in fade-in slide-in-from-top-1">
+            <button
+              type="button"
+              onClick={() => {
+                setCurrentRoomId('todos-juntos');
+                onNavigateTab?.('chat');
+              }}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-800/90 hover:bg-teal-700 text-white text-[11px] font-bold shadow-md backdrop-blur-xs border border-teal-500/40 transition-all cursor-pointer hover:scale-105 active:scale-95"
+              title="Toca para ir a la Sala General Todos Juntos"
+            >
+              <span>{currentBarrioObj?.icon || '📍'}</span>
+              <span className="truncate max-w-[130px] sm:max-w-none">Barrio {currentBarrioObj?.name}</span>
+              <span className="bg-teal-950/80 px-1.5 py-0.5 rounded-full text-[10px] text-teal-200">← General</span>
+            </button>
+          </div>
+        )}
         
         {/* Columna de Chat Principal */}
         <div className="flex-1 min-h-0 flex flex-col h-full overflow-hidden">

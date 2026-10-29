@@ -68,9 +68,9 @@ export const Header: React.FC<HeaderProps> = ({
   const formattedName = user ? getFormattedUserName(user) : 'Vecino Invitado';
 
   return (
-    <header className={`${activeTab === 'chat' ? 'hidden md:block' : 'block'} sticky top-0 z-40 shrink-0 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors pt-[env(safe-area-inset-top,0px)]`}>
+    <header className={`${(activeTab === 'chat' || activeTab === 'mibarrio') ? 'hidden md:block' : 'block'} sticky top-0 z-40 shrink-0 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors pt-[env(safe-area-inset-top,0px)]`}>
       {/* Brand Zone (Hidden on mobile when in full chat to maximize screen space as in screenshot) */}
-      <div className={`${activeTab === 'chat' ? 'hidden md:flex' : 'flex'} max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-16 items-center justify-between gap-3`}>
+      <div className={`${(activeTab === 'chat' || activeTab === 'mibarrio') ? 'hidden md:flex' : 'flex'} max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-16 items-center justify-between gap-3`}>
         
         {/* Brand Zone */}
         <div className="flex items-center gap-3 shrink-0">

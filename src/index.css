@@ -53,6 +53,14 @@
   -webkit-overflow-scrolling: touch;
 }
 
+/* Scroll fluido de página para Tablón, Barrios y Perfil */
+.scrollable-main {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 5px;

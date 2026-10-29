@@ -252,26 +252,23 @@ export const BulletinBoard: React.FC<BulletinBoardProps> = ({
       {/* Barra de Controles y Búsqueda */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs space-y-3">
         
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3">
           {/* Título de Sección */}
           <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <span className="text-xl">📋</span>
-              Tablón de Anuncios Vecinales
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <span>📋</span>
+              Tablón Vecinal
             </h2>
-            <p className="text-xs text-slate-500">
-              Ventas, regalos, búsquedas y oficios en Capilla del Monte (vigencia de 24 hs)
+            <p className="text-[11px] text-slate-500 hidden sm:block">
+              Ventas, regalos, búsquedas y oficios en Capilla del Monte (vigencia 24 hs)
             </p>
           </div>
 
-          {/* Botón Publicar Anuncio */}
-          <button
-            onClick={() => { setEditingPost(null); setShowCreateModal(true); }}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-semibold text-xs shadow-md transition cursor-pointer shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Publicar Anuncio</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-teal-700 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 px-2.5 py-1 rounded-full border border-teal-200 dark:border-teal-800/50">
+              {posts.length} {posts.length === 1 ? 'anuncio' : 'anuncios'}
+            </span>
+          </div>
         </div>
 
         {/* Filtros Interactivos */}
@@ -714,9 +711,22 @@ export const BulletinBoard: React.FC<BulletinBoardProps> = ({
         </div>
       )}
 
+      {/* Botón Flotante con un Más (+) para Publicar Anuncio en el Tablón */}
+      <button
+        type="button"
+        onClick={() => {
+          setEditingPost(null);
+          setShowCreateModal(true);
+        }}
+        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-teal-700 hover:bg-teal-800 active:scale-95 text-white shadow-2xl flex items-center justify-center border-2 border-white/20 transition-all cursor-pointer group hover:scale-105"
+        title="Publicar nuevo anuncio en el tablón (+)"
+      >
+        <Plus className="w-7 h-7 group-hover:rotate-90 transition-transform duration-200" />
+      </button>
+
       {/* Toast no intrusivo */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl bg-teal-800 text-white text-xs font-semibold shadow-xl border border-teal-600 animate-in fade-in slide-in-from-bottom-2">
+        <div className="fixed bottom-20 right-6 z-50 px-4 py-2.5 rounded-xl bg-teal-800 text-white text-xs font-semibold shadow-xl border border-teal-600 animate-in fade-in slide-in-from-bottom-2">
           {toastMessage}
         </div>
       )}
