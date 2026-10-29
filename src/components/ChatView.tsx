@@ -26,7 +26,10 @@ import {
   AtSign,
   Info,
   ChevronDown,
-  X
+  X,
+  ArrowLeft,
+  CheckCheck,
+  MoreVertical
 } from 'lucide-react';
 import { ConnectedUsersPanel } from './ConnectedUsersPanel';
 
@@ -35,9 +38,15 @@ interface ChatViewProps {
   onSelectUser: (userSummary: { id: string; name: string; avatar: string; neighborhood: string }) => void;
   initialRoomId?: string;
   onRequireAuth?: () => void;
+  onBack?: () => void;
+  onNavigateTab?: (tab: string) => void;
+  onOpenProfile?: () => void;
+  onOpenInstall?: () => void;
+  isDarkMode?: boolean;
+  toggleDarkMode?: () => void;
 }
 
-const QUICK_EMOJIS = ['🧉', '⛰️', '🌲', '👍', '❤️', '👏', '🌞', '🦊', '🏠'];
+const QUICK_EMOJIS = ['🧉', '⛰️', '🌲', '👍', '❤️', '👏', '🌞', '🦊', '🏠', '🌿', '✨'];
 const REACTION_EMOJIS = ['👍', '❤️', '🧉', '👏', '😂'];
 
 export const ChatView: React.FC<ChatViewProps> = ({
@@ -45,9 +54,16 @@ export const ChatView: React.FC<ChatViewProps> = ({
   onSelectUser,
   initialRoomId = 'todos-juntos',
   onRequireAuth,
+  onBack,
+  onNavigateTab,
+  onOpenProfile,
+  onOpenInstall,
+  isDarkMode,
+  toggleDarkMode,
 }) => {
   const [currentRoomId, setCurrentRoomId] = useState(initialRoomId);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [showMenuDropdown, setShowMenuDropdown] = useState(false);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(true);
   const [errorBanner, setErrorBanner] = useState('');
@@ -305,21 +321,21 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const typingList = Object.values(typingUsers);
 
   return (
-    <div className="flex flex-col h-full w-full bg-white dark:bg-slate-900 border-y md:border md:rounded-2xl border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden relative">
+    <div className="flex flex-col h-full w-full whatsapp-bg border-0 md:border md:rounded-2xl border-slate-200 dark:border-slate-800 overflow-hidden relative">
       
-      {/* Barra Superior del Chat: Selector de Salas, Búsqueda y Vecinos en 1 sola fila limpia */}
-      <div className="px-3 py-2 border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-900/90 flex items-center justify-between gap-2 shrink-0 h-12">
+      {/* Barra Superior WhatsApp Auténtica */}
+      <div className="px-2 sm:px-3 py-2 border-b border-[#006e5a] dark:border-[#2a3942] bg-[#008069] text-white dark:bg-[#202c33] dark:text-[#e9edef] flex items-center justify-between gap-2 shrink-0 h-14 z-30 shadow-xs">
         {showSearchInput ? (
           <div className="flex-1 flex items-center gap-2 animate-in fade-in">
             <div className="relative flex-1">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+              <Search className="w-4 h-4 text-white/70 absolute left-3 top-2.5" />
               <input
                 type="text"
                 autoFocus
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                placeholder="Buscar en esta sala..."
-                className="w-full pl-8 pr-2 py-1.5 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-1 focus:ring-teal-500"
+                placeholder="Buscar mensajes en esta sala..."
+                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-full border border-white/20 bg-black/15 text-white placeholder:text-white/60 focus:outline-hidden focus:ring-2 focus:ring-white/40"
               />
             </div>
             <button
@@ -328,7 +344,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
                 setShowSearchInput(false);
                 setSearchTerm('');
               }}
-              className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 cursor-pointer"
+              className="p-1.5 rounded-full hover:bg-black/15 text-white/90 cursor-pointer"
               title="Cerrar búsqueda"
             >
               <X className="w-4 h-4" />
@@ -336,50 +352,166 @@ export const ChatView: React.FC<ChatViewProps> = ({
           </div>
         ) : (
           <>
-            {/* Selector de Salas Compacto */}
-            <div className="relative max-w-[210px] sm:max-w-xs flex-1">
-              <select
-                value={currentRoomId}
-                onChange={e => setCurrentRoomId(e.target.value)}
-                className="w-full appearance-none pl-2.5 pr-7 py-1.5 text-xs font-bold rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white shadow-2xs focus:ring-2 focus:ring-teal-500 focus:outline-hidden cursor-pointer truncate"
-              >
-                <option value="todos-juntos">⛰️ Sala General "Todos juntos"</option>
-                <optgroup label="Salas por Barrio de Capilla del Monte">
-                  {BARRIOS_CAPILLA.map(b => (
-                    <option key={b.id} value={b.id}>
-                      {b.icon} Barrio {b.name}
-                    </option>
-                  ))}
-                </optgroup>
-              </select>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-2.5 pointer-events-none" />
+            {/* Izquierda: Flecha Volver estilo WhatsApp + Avatar + Título */}
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+              {onBack && (
+                <button
+                  type="button"
+                  onClick={onBack}
+                  className="p-1.5 -ml-1 text-white hover:bg-black/15 rounded-full transition-colors cursor-pointer shrink-0 md:hidden"
+                  title="Volver"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+              )}
+
+              {/* Avatar circular WhatsApp */}
+              <div className="w-9 h-9 rounded-full bg-emerald-900/60 text-white flex items-center justify-center text-lg font-bold shrink-0 ring-1 ring-white/30 shadow-2xs">
+                {currentRoomId === 'todos-juntos' ? '⛰️' : currentBarrioObj?.icon || '📍'}
+              </div>
+
+              {/* Título de Sala y Selector rápido */}
+              <div className="min-w-0 flex-1">
+                <div className="relative inline-block max-w-[170px] sm:max-w-xs">
+                  <select
+                    value={currentRoomId}
+                    onChange={e => setCurrentRoomId(e.target.value)}
+                    className="w-full appearance-none pr-5 py-0 text-xs sm:text-sm font-bold text-white dark:text-[#e9edef] bg-transparent border-0 focus:outline-hidden cursor-pointer truncate"
+                    title="Toca para cambiar de barrio o sala"
+                  >
+                    <option value="todos-juntos" className="text-slate-900 dark:text-white bg-white dark:bg-slate-900">⛰️ Sala General "Todos juntos"</option>
+                    <optgroup label="Salas de los 20 Barrios" className="text-slate-900 dark:text-white bg-white dark:bg-slate-900">
+                      {BARRIOS_CAPILLA.map(b => (
+                        <option key={b.id} value={b.id} className="text-slate-900 dark:text-white bg-white dark:bg-slate-900">
+                          {b.icon} Barrio {b.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 text-white/70 absolute right-0 top-1 pointer-events-none" />
+                </div>
+                <div className="text-[10px] sm:text-xs text-white/80 dark:text-slate-300 flex items-center gap-1 leading-tight truncate">
+                  {typingList.length > 0 ? (
+                    <span className="text-[#a7f3d0] dark:text-[#00a884] font-medium animate-pulse truncate">
+                      {typingList.map(t => t.userName).join(', ')} está escribiendo...
+                    </span>
+                  ) : (
+                    <>
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse shrink-0" />
+                      <span className="truncate">en línea · Capilla del Monte</span>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* Acciones: Botón Buscar y Botón Vecinos */}
-            <div className="flex items-center gap-1.5 shrink-0">
+            {/* Derecha: Botón Buscar, Vecinos y Menú 3 puntos estilo WhatsApp */}
+            <div className="flex items-center gap-0.5 sm:gap-1 shrink-0 relative">
               <button
                 type="button"
                 onClick={() => setShowSearchInput(true)}
-                className="p-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer"
-                title="Buscar mensajes"
+                className="p-2 rounded-full text-white/90 hover:text-white hover:bg-black/15 transition-colors cursor-pointer"
+                title="Buscar en el chat"
               >
-                <Search className="w-3.5 h-3.5" />
+                <Search className="w-4 h-4" />
               </button>
 
               <button
                 type="button"
                 onClick={() => setShowConnectedPanel(prev => !prev)}
-                className={`px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shrink-0 ${
+                className={`p-2 rounded-full transition-colors cursor-pointer relative ${
                   showConnectedPanel
-                    ? 'bg-teal-700 text-white border-teal-700 shadow-xs'
-                    : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700'
+                    ? 'bg-black/25 text-white'
+                    : 'text-white/90 hover:text-white hover:bg-black/15'
                 }`}
-                title="Ver vecinos conectados"
+                title="Vecinos conectados"
               >
-                <Users className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-                <span className="hidden sm:inline">Vecinos</span>
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <Users className="w-4 h-4" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
               </button>
+
+              {/* Menú de 3 puntos desplegable WhatsApp */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowMenuDropdown(prev => !prev)}
+                  className="p-2 rounded-full text-white/90 hover:text-white hover:bg-black/15 transition-colors cursor-pointer"
+                  title="Menú de opciones"
+                >
+                  <MoreVertical className="w-4 h-4" />
+                </button>
+
+                {showMenuDropdown && (
+                  <div className="absolute right-0 mt-1 w-52 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl py-1.5 z-50 text-xs animate-in fade-in zoom-in-95">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowMenuDropdown(false);
+                        onNavigateTab?.('tablon');
+                      }}
+                      className="w-full text-left px-3.5 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2.5 cursor-pointer font-medium text-slate-800 dark:text-slate-200"
+                    >
+                      <span>📋</span> Ir al Tablón
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowMenuDropdown(false);
+                        onNavigateTab?.('mibarrio');
+                      }}
+                      className="w-full text-left px-3.5 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2.5 cursor-pointer font-medium text-slate-800 dark:text-slate-200"
+                    >
+                      <span>📍</span> Mi Barrio
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowMenuDropdown(false);
+                        onNavigateTab?.('barrios');
+                      }}
+                      className="w-full text-left px-3.5 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2.5 cursor-pointer font-medium text-slate-800 dark:text-slate-200"
+                    >
+                      <span>🧭</span> Los 20 Barrios
+                    </button>
+                    {onOpenProfile && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowMenuDropdown(false);
+                          onOpenProfile();
+                        }}
+                        className="w-full text-left px-3.5 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2.5 cursor-pointer font-medium text-slate-800 dark:text-slate-200"
+                      >
+                        <span>👤</span> Mi Perfil / Configuración
+                      </button>
+                    )}
+                    {toggleDarkMode && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowMenuDropdown(false);
+                          toggleDarkMode();
+                        }}
+                        className="w-full text-left px-3.5 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2.5 cursor-pointer font-medium text-slate-800 dark:text-slate-200"
+                      >
+                        <span>{isDarkMode ? '☀️ Modo Claro' : '🌙 Modo Oscuro'}</span>
+                      </button>
+                    )}
+                    {onOpenInstall && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowMenuDropdown(false);
+                          onOpenInstall();
+                        }}
+                        className="w-full text-left px-3.5 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2.5 cursor-pointer font-medium text-teal-700 dark:text-teal-400 font-bold border-t border-slate-100 dark:border-slate-700/60"
+                      >
+                        <span>📲</span> Instalar App Celular
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </>
         )}
@@ -467,38 +599,44 @@ export const ChatView: React.FC<ChatViewProps> = ({
                 {/* Burbuja del Mensaje */}
                 <div className={`max-w-[85%] sm:max-w-md ${isMe ? 'items-end' : 'items-start'}`}>
                   
-                  {/* Encabezado: Nombre (Barrio) */}
-                  <div className={`flex items-center gap-2 mb-0.5 text-[11px] ${isMe ? 'justify-end' : ''}`}>
-                    <button
-                      onClick={() => onSelectUser({
-                        id: msg.userId,
-                        name: msg.userName,
-                        avatar: msg.userAvatar,
-                        neighborhood: msg.userNeighborhood
-                      })}
-                      className="font-bold text-slate-900 dark:text-slate-100 hover:text-teal-600 dark:hover:text-teal-400 cursor-pointer"
-                    >
-                      {msg.userName}
-                    </button>
-                    {msg.userRole === 'admin' && (
-                      <span className="text-[9px] uppercase font-bold px-1.5 py-0.2 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300">
-                        Coordinador
-                      </span>
-                    )}
-                    <span className="text-slate-400 text-[10px]">
-                      {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-
-                  {/* Cuerpo del Mensaje */}
+                  {/* Cuerpo del Mensaje Estilo WhatsApp */}
                   <div
-                    className={`rounded-2xl px-3.5 py-2 text-sm shadow-xs ${
+                    className={`rounded-2xl px-3.5 py-2 text-[14.5px] shadow-xs ${
                       isMe
-                        ? 'bg-teal-700 text-white rounded-tr-none'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-tl-none border border-slate-200/80 dark:border-slate-700/80'
+                        ? 'bg-[#d9fdd3] text-[#111b21] dark:bg-[#005c4b] dark:text-[#e9edef] rounded-tr-xs'
+                        : 'bg-white text-[#111b21] dark:bg-[#202c33] dark:text-[#e9edef] rounded-tl-xs border border-slate-200/50 dark:border-transparent'
                     }`}
                   >
-                    <p className="whitespace-pre-wrap break-words">{msg.text}</p>
+                    {!isMe && (
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <button
+                          onClick={() => onSelectUser({
+                            id: msg.userId,
+                            name: msg.userName,
+                            avatar: msg.userAvatar,
+                            neighborhood: msg.userNeighborhood
+                          })}
+                          className="font-bold text-xs text-[#008069] dark:text-[#00a884] hover:underline cursor-pointer"
+                        >
+                          {msg.userName}
+                        </button>
+                        <span className="text-[10px] text-slate-400 font-normal">
+                          ({msg.userNeighborhood})
+                        </span>
+                        {msg.userRole === 'admin' && (
+                          <span className="text-[9px] uppercase font-bold px-1 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300">
+                            Coordinador
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    <p className="whitespace-pre-wrap break-words leading-relaxed">{msg.text}</p>
+                    
+                    <div className={`flex items-center gap-1 justify-end mt-0.5 text-[11px] ${isMe ? 'text-slate-500 dark:text-teal-200/80' : 'text-slate-400'}`}>
+                      <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      {isMe && <CheckCheck className="w-3.5 h-3.5 text-[#53bdeb] shrink-0" />}
+                    </div>
                   </div>
 
                   {/* Reacciones y Acciones */}
@@ -613,7 +751,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
         {/* Drawer de Emojis Rápidos Serranos (Toggleable con botón de mate) */}
         {showQuickEmojis && (
-          <div className="flex items-center gap-1.5 mb-2 overflow-x-auto pb-1 text-sm bg-slate-50 dark:bg-slate-800/80 p-2 rounded-xl border border-slate-200 dark:border-slate-700 animate-in fade-in slide-in-from-bottom-2">
+          <div className="flex items-center gap-1.5 mb-2 overflow-x-auto pb-1 text-sm bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700 animate-in fade-in slide-in-from-bottom-2 shadow-xs">
             <span className="text-[11px] font-semibold text-slate-400 mr-1 shrink-0">Serranía:</span>
             {QUICK_EMOJIS.map(emoji => (
               <button
@@ -622,7 +760,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
                 onClick={() => {
                   setInputText(prev => prev + emoji);
                 }}
-                className="p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 hover:scale-110 transition-transform cursor-pointer shrink-0 text-base"
+                className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 hover:scale-125 transition-transform cursor-pointer shrink-0 text-lg"
               >
                 {emoji}
               </button>
@@ -632,59 +770,61 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
         {/* Input Form or Guest Banner */}
         {!currentUser ? (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 bg-teal-50/80 dark:bg-teal-950/40 rounded-xl border border-teal-200 dark:border-teal-900/60 text-xs">
-            <div className="flex items-center gap-2 text-teal-900 dark:text-teal-200">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 bg-white dark:bg-[#2a3942] rounded-2xl border border-slate-200 dark:border-slate-700 text-xs shadow-xs">
+            <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200">
               <span className="text-base">👋</span>
-              <span>Estás explorando el chat en modo visitante. Para participar y enviar mensajes:</span>
+              <span>Modo visitante. Para enviar mensajes comunitarios:</span>
             </div>
             <button
               type="button"
               onClick={onRequireAuth}
-              className="px-4 py-2 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs shadow-xs transition cursor-pointer shrink-0"
+              className="px-4 py-2 rounded-xl bg-[#00a884] hover:bg-[#008f6f] text-white font-bold text-xs shadow-xs transition cursor-pointer shrink-0"
             >
               Ingresar / Registrarse
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSendMessage} className="flex items-center gap-1.5 sm:gap-2">
-            {/* Botón Mate / Emojis Serranos */}
-            <button
-              type="button"
-              onClick={() => setShowQuickEmojis(!showQuickEmojis)}
-              className={`p-2 rounded-xl text-base transition-colors shrink-0 cursor-pointer ${
-                showQuickEmojis
-                  ? 'bg-teal-700 text-white'
-                  : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
-              }`}
-              title="Emojis serranos de Capilla"
-            >
-              🧉
-            </button>
+          <form onSubmit={handleSendMessage} className="flex items-center gap-2 w-full">
+            {/* Input Pill estilo WhatsApp */}
+            <div className="bg-white dark:bg-[#2a3942] rounded-3xl flex items-center px-2.5 py-0.5 flex-1 min-w-0 shadow-xs border border-transparent focus-within:border-teal-500/40">
+              {/* Botón Mate / Emojis Serranos */}
+              <button
+                type="button"
+                onClick={() => setShowQuickEmojis(!showQuickEmojis)}
+                className={`p-1.5 rounded-full text-lg transition-transform hover:scale-110 active:scale-95 shrink-0 cursor-pointer ${
+                  showQuickEmojis ? 'scale-110' : ''
+                }`}
+                title="Emojis serranos de Capilla"
+              >
+                🧉
+              </button>
 
-            <input
-              type="text"
-              value={inputText}
-              onChange={handleInputChange}
-              onFocus={() => {
-                setShowQuickEmojis(false);
-                setTimeout(() => scrollToBottom(true), 150);
-              }}
-              disabled={!canPostInRoom}
-              placeholder={
-                canPostInRoom
-                  ? `Escribe en ${isGeneralRoom ? 'Todos juntos' : 'Barrio ' + currentBarrioObj?.name}...`
-                  : `Solo residentes de ${currentBarrioObj?.name} pueden escribir`
-              }
-              className="flex-1 min-w-0 px-3.5 py-2 sm:py-2.5 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-teal-500 disabled:bg-slate-100 dark:disabled:bg-slate-800/40 disabled:text-slate-400 disabled:cursor-not-allowed"
-            />
+              <input
+                type="text"
+                value={inputText}
+                onChange={handleInputChange}
+                onFocus={() => {
+                  setShowQuickEmojis(false);
+                  setTimeout(() => scrollToBottom(true), 120);
+                }}
+                disabled={!canPostInRoom}
+                placeholder={
+                  canPostInRoom
+                    ? `Mensaje...`
+                    : `Solo residentes de ${currentBarrioObj?.name} pueden escribir`
+                }
+                className="flex-1 min-w-0 px-2 py-2 text-[15px] bg-transparent text-[#111b21] dark:text-[#e9edef] placeholder:text-slate-400 focus:outline-hidden border-0 disabled:text-slate-400 disabled:cursor-not-allowed"
+              />
+            </div>
 
+            {/* Botón Circular Enviar estilo WhatsApp */}
             <button
               type="submit"
               disabled={!inputText.trim() || !canPostInRoom}
-              className="p-2 sm:p-2.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-semibold shadow-xs disabled:opacity-40 transition-colors cursor-pointer shrink-0 disabled:cursor-not-allowed"
+              className="w-11 h-11 rounded-full bg-[#00a884] hover:bg-[#008f6f] active:scale-95 text-white flex items-center justify-center shadow-md disabled:opacity-40 transition-all cursor-pointer shrink-0 disabled:cursor-not-allowed"
               title={canPostInRoom ? "Enviar mensaje" : `Solo residentes de ${currentBarrioObj?.name}`}
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-5 h-5 ml-0.5" />
             </button>
           </form>
         )}

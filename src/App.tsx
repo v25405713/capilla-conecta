@@ -46,6 +46,30 @@ export default function App() {
 
   const toggleDarkMode = () => setIsDarkMode(prev => !prev);
 
+  // Manejo de altura exacta del viewport para teclados virtuales móviles (Brave/Chrome/Safari)
+  useEffect(() => {
+    const updateViewportHeight = () => {
+      const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      document.documentElement.style.setProperty('--app-height', `${vh}px`);
+    };
+
+    updateViewportHeight();
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', updateViewportHeight);
+      window.visualViewport.addEventListener('scroll', updateViewportHeight);
+    }
+    window.addEventListener('resize', updateViewportHeight);
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', updateViewportHeight);
+        window.visualViewport.removeEventListener('scroll', updateViewportHeight);
+      }
+      window.removeEventListener('resize', updateViewportHeight);
+    };
+  }, []);
+
   // Cargar usuario guardado en sesión local
   useEffect(() => {
     const saved = localStorage.getItem('capilla_user');
@@ -124,9 +148,10 @@ export default function App() {
     <div
       className={`bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors ${
         activeTab === 'chat'
-          ? 'fixed inset-0 h-full w-full overflow-hidden'
+          ? 'fixed inset-0 w-full overflow-hidden'
           : 'min-h-screen'
       }`}
+      style={activeTab === 'chat' ? { height: 'var(--app-height, 100dvh)', maxHeight: 'var(--app-height, 100dvh)' } : undefined}
     >
       
       {/* Indicador de conexión offline */}
@@ -140,7 +165,7 @@ export default function App() {
         />
       ) : (
         <>
-          {/* Header Superior */}
+          {/* Header Superior (se oculta en móviles dentro del chat para dar 100% protagonismo a la vista WhatsApp) */}
           <Header
             user={currentUser}
             activeTab={activeTab}
@@ -162,22 +187,34 @@ export default function App() {
             onMarkNotificationsRead={handleMarkNotificationsRead}
           />
 
-          {/* Contenido Principal con comportamiento responsive óptimo (sin hueco ni borde negro abajo) */}
+          {/* Contenido Principal con comportamiento responsive óptimo */}
           <main
             className={`flex-1 min-h-0 flex flex-col w-full ${
               activeTab === 'chat'
-                ? 'p-0 m-0 pb-0 overflow-hidden md:pb-6 md:px-6 md:pt-4 md:max-w-7xl md:mx-auto'
-                : 'max-w-7xl mx-auto px-2 sm:px-4 md:px-6 pt-3 sm:pt-5 pb-16 md:pb-8'
+                ? 'p-0 m-0 pb-0 h-full overflow-hidden md:pb-4 md:px-4 md:pt-2 md:max-w-7xl md:mx-auto'
+                : 'overflow-y-auto overscroll-contain max-w-7xl mx-auto px-2 sm:px-4 md:px-6 pt-3 sm:pt-5 pb-20 md:pb-8'
             }`}
           >
             
-            {/* PESTAÑA: CHAT COMUNITARIO (Scroll aislado exclusivamente dentro del mensaje) */}
+            {/* PESTAÑA: CHAT COMUNITARIO ESTILO WHATSAPP (Scroll aislado exclusivamente dentro del mensaje) */}
             {activeTab === 'chat' && (
               <div className="flex-1 min-h-0 flex flex-col w-full h-full overflow-hidden">
                 <ChatView
                   currentUser={currentUser}
                   initialRoomId={chatRoomId}
                   onSelectUser={u => setSelectedPublicUserId(u.id)}
+                  onBack={() => setActiveTab('tablon')}
+                  onNavigateTab={tab => {
+                    if (tab === 'mibarrio' && currentUser) {
+                      setChatRoomId(currentUser.neighborhoodId);
+                      setTablonBarrioFilter(currentUser.neighborhoodId);
+                    }
+                    setActiveTab(tab as any);
+                  }}
+                  onOpenProfile={() => setShowProfileModal(true)}
+                  onOpenInstall={() => setShowInstallModal(true)}
+                  isDarkMode={isDarkMode}
+                  toggleDarkMode={toggleDarkMode}
                 />
               </div>
             )}
@@ -209,11 +246,17 @@ export default function App() {
                   <div className="text-3xl sm:text-4xl">⛰️</div>
                 </div>
 
-                <div className="flex-1 flex flex-col w-full h-[calc(100dvh-17rem)] md:h-[calc(100dvh-12rem)] min-h-[380px]">
+                <div className="flex-1 flex flex-col w-full h-[calc(100dvh-17rem)] md:h-[calc(100dvh-12rem)] min-h-[380px] rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-md">
                   <ChatView
                     currentUser={currentUser}
                     initialRoomId={currentUser.neighborhoodId}
                     onSelectUser={u => setSelectedPublicUserId(u.id)}
+                    onBack={() => setActiveTab('tablon')}
+                    onNavigateTab={tab => setActiveTab(tab as any)}
+                    onOpenProfile={() => setShowProfileModal(true)}
+                    onOpenInstall={() => setShowInstallModal(true)}
+                    isDarkMode={isDarkMode}
+                    toggleDarkMode={toggleDarkMode}
                   />
                 </div>
               </div>
