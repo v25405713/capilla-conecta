@@ -269,13 +269,16 @@ export const Header: React.FC<HeaderProps> = ({
           {user ? (
             <button
               onClick={onOpenProfile}
-              className="flex items-center gap-1.5 sm:gap-2 pl-1.5 sm:pl-2 pr-2 sm:pr-3 py-1 sm:py-1.5 rounded-xl border border-slate-200 dark:border-slate-700/80 hover:border-teal-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer group shrink-0"
-              title="Ver y editar tu perfil"
+              className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl border border-teal-600/30 bg-teal-50/50 dark:bg-teal-950/30 hover:border-teal-500 hover:bg-teal-100/60 dark:hover:bg-teal-900/50 transition-colors cursor-pointer group shrink-0"
+              title="Configuración y modificar mi perfil"
             >
               <span className="text-base sm:text-lg leading-none shrink-0">{user.avatarEmoji}</span>
-              <div className="text-left hidden sm:block max-w-[110px] md:max-w-[130px] truncate">
-                <span className="text-xs font-bold text-slate-900 dark:text-white block truncate group-hover:text-teal-600 dark:group-hover:text-teal-400">
+              <div className="text-left max-w-[85px] sm:max-w-[110px] md:max-w-[130px] truncate">
+                <span className="text-xs font-bold text-slate-900 dark:text-white block truncate group-hover:text-teal-600 dark:group-hover:text-teal-400 leading-tight">
                   {formattedName}
+                </span>
+                <span className="text-[10px] text-teal-700 dark:text-teal-300 font-semibold block leading-tight">
+                  Perfil / Config
                 </span>
               </div>
             </button>
@@ -293,10 +296,10 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Modern Bottom Navigation Bar on Mobile Phones (Safe Area Aware) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 py-1 px-2 flex justify-around items-center shadow-lg pb-[max(0.4rem,env(safe-area-inset-bottom))]">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 py-1 px-1 flex justify-around items-center shadow-lg pb-[max(0.4rem,env(safe-area-inset-bottom))]">
         <button
           onClick={() => setActiveTab('tablon')}
-          className={`flex flex-col items-center py-1 px-3 text-[10px] font-semibold transition-colors cursor-pointer ${
+          className={`flex flex-col items-center py-1 px-2 text-[10px] font-semibold transition-colors cursor-pointer ${
             activeTab === 'tablon'
               ? 'text-teal-700 dark:text-teal-400'
               : 'text-slate-500 dark:text-slate-400'
@@ -308,7 +311,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         <button
           onClick={() => setActiveTab('chat')}
-          className={`flex flex-col items-center py-1 px-3 text-[10px] font-semibold transition-colors cursor-pointer ${
+          className={`flex flex-col items-center py-1 px-2 text-[10px] font-semibold transition-colors cursor-pointer ${
             activeTab === 'chat'
               ? 'text-teal-700 dark:text-teal-400'
               : 'text-slate-500 dark:text-slate-400'
@@ -318,22 +321,10 @@ export const Header: React.FC<HeaderProps> = ({
           <span>Chat</span>
         </button>
 
-        <button
-          onClick={() => setActiveTab('barrios')}
-          className={`flex flex-col items-center py-1 px-3 text-[10px] font-semibold transition-colors cursor-pointer ${
-            activeTab === 'barrios'
-              ? 'text-teal-700 dark:text-teal-400'
-              : 'text-slate-500 dark:text-slate-400'
-          }`}
-        >
-          <Compass className="w-4 h-4 mb-0.5" />
-          <span>Barrios</span>
-        </button>
-
-        {user && (
+        {user ? (
           <button
             onClick={() => setActiveTab('mibarrio')}
-            className={`flex flex-col items-center py-1 px-3 text-[10px] font-semibold transition-colors cursor-pointer ${
+            className={`flex flex-col items-center py-1 px-2 text-[10px] font-semibold transition-colors cursor-pointer ${
               activeTab === 'mibarrio'
                 ? 'text-teal-700 dark:text-teal-400'
                 : 'text-slate-500 dark:text-slate-400'
@@ -342,15 +333,50 @@ export const Header: React.FC<HeaderProps> = ({
             <MapPin className="w-4 h-4 mb-0.5" />
             <span>Mi Barrio</span>
           </button>
+        ) : (
+          <button
+            onClick={() => setActiveTab('barrios')}
+            className={`flex flex-col items-center py-1 px-2 text-[10px] font-semibold transition-colors cursor-pointer ${
+              activeTab === 'barrios'
+                ? 'text-teal-700 dark:text-teal-400'
+                : 'text-slate-500 dark:text-slate-400'
+            }`}
+          >
+            <Compass className="w-4 h-4 mb-0.5" />
+            <span>Barrios</span>
+          </button>
         )}
 
         <button
-          onClick={onOpenInstallModal}
-          className="flex flex-col items-center py-1 px-3 text-[10px] font-bold text-teal-700 dark:text-teal-400 cursor-pointer"
+          onClick={() => setActiveTab('barrios')}
+          className={`flex flex-col items-center py-1 px-2 text-[10px] font-semibold transition-colors cursor-pointer ${
+            activeTab === 'barrios'
+              ? 'text-teal-700 dark:text-teal-400'
+              : 'text-slate-500 dark:text-slate-400'
+          }`}
         >
-          <Smartphone className="w-4 h-4 mb-0.5 text-amber-500" />
-          <span>Instalar</span>
+          <Compass className="w-4 h-4 mb-0.5" />
+          <span>20 Barrios</span>
         </button>
+
+        {user ? (
+          <button
+            onClick={onOpenProfile}
+            className="flex flex-col items-center py-1 px-2 text-[10px] font-bold text-teal-700 dark:text-teal-400 cursor-pointer"
+            title="Configuración y Perfil"
+          >
+            <span className="text-sm leading-none mb-0.5">{user.avatarEmoji}</span>
+            <span>Perfil</span>
+          </button>
+        ) : (
+          <button
+            onClick={onOpenInstallModal}
+            className="flex flex-col items-center py-1 px-2 text-[10px] font-bold text-teal-700 dark:text-teal-400 cursor-pointer"
+          >
+            <Smartphone className="w-4 h-4 mb-0.5 text-amber-500" />
+            <span>Instalar</span>
+          </button>
+        )}
       </nav>
     </header>
   );

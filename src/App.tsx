@@ -156,12 +156,18 @@ export default function App() {
             onMarkNotificationsRead={handleMarkNotificationsRead}
           />
 
-          {/* Contenido Principal con espaciado superior e inferior seguro */}
-          <main className="flex-1 flex flex-col w-full max-w-7xl mx-auto px-2 sm:px-4 md:px-6 pt-3 sm:pt-5 pb-24 md:pb-8">
+          {/* Contenido Principal con comportamiento responsive óptimo */}
+          <main
+            className={`flex-1 flex flex-col w-full ${
+              activeTab === 'chat'
+                ? 'p-0 m-0 h-[calc(100dvh-4rem-3.75rem)] md:h-[calc(100dvh-5.5rem)] md:max-w-7xl md:mx-auto md:px-6 md:pt-4 md:pb-8 overflow-hidden'
+                : 'max-w-7xl mx-auto px-2 sm:px-4 md:px-6 pt-3 sm:pt-5 pb-24 md:pb-8'
+            }`}
+          >
             
-            {/* PESTAÑA: CHAT COMUNITARIO (100% Pantalla Completa y Ancho) */}
+            {/* PESTAÑA: CHAT COMUNITARIO (100% Pantalla Completa y Ancho sin desbordes) */}
             {activeTab === 'chat' && (
-              <div className="flex-1 flex flex-col w-full h-[calc(100dvh-8rem)] md:h-[calc(100dvh-5.5rem)]">
+              <div className="flex-1 flex flex-col w-full h-full overflow-hidden">
                 <ChatView
                   currentUser={currentUser}
                   initialRoomId={chatRoomId}
@@ -197,7 +203,7 @@ export default function App() {
                   <div className="text-3xl sm:text-4xl">⛰️</div>
                 </div>
 
-                <div className="flex-1 flex flex-col w-full h-[calc(100dvh-15rem)] md:h-[calc(100dvh-12rem)] min-h-[460px]">
+                <div className="flex-1 flex flex-col w-full h-[calc(100dvh-17rem)] md:h-[calc(100dvh-12rem)] min-h-[380px]">
                   <ChatView
                     currentUser={currentUser}
                     initialRoomId={currentUser.neighborhoodId}

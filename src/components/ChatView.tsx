@@ -286,7 +286,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const typingList = Object.values(typingUsers);
 
   return (
-    <div className="flex flex-col h-full w-full bg-white dark:bg-slate-900 md:rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden relative">
+    <div className="flex flex-col h-full w-full bg-white dark:bg-slate-900 border-y md:border md:rounded-2xl border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden relative">
       
       {/* Barra Superior del Chat: Selector de Salas, Búsqueda y Vecinos */}
       <div className="p-2.5 sm:p-3 md:p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80 flex flex-wrap items-center justify-between gap-2.5 shrink-0">

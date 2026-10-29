@@ -84,45 +84,48 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs p-3 sm:p-6 flex justify-center items-start sm:items-center">
-      <div className="w-full max-w-lg my-auto rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs p-2 sm:p-4 flex justify-center items-end sm:items-center">
+      <div className="w-full max-w-lg rounded-t-3xl sm:rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 sm:zoom-in-95 max-h-[92dvh] sm:max-h-[88dvh] flex flex-col">
         
-        {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">{avatarEmoji}</span>
+        {/* Header Fijo */}
+        <div className="p-3.5 sm:p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900 shrink-0">
+          <div className="flex items-center gap-2.5">
+            <span className="text-2xl leading-none">{avatarEmoji}</span>
             <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                Mi Perfil Vecinal
+              <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                Configuración y Mi Perfil
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-[11px] sm:text-xs text-slate-500">
                 {getFormattedUserName({ displayName, email: user.email, neighborhoodId: user.neighborhoodId })}
               </p>
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+            className="p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
+        {/* Notificaciones */}
         {error && (
-          <div className="m-4 p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 text-xs flex items-center gap-2">
+          <div className="mx-4 mt-3 p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 text-xs flex items-center gap-2 shrink-0">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="m-4 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300 text-xs flex items-center gap-2">
+          <div className="mx-4 mt-3 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300 text-xs flex items-center gap-2 shrink-0">
             <Check className="w-4 h-4 shrink-0" />
             <span>{success}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        {/* Formulario Scrolleable Interno (Nunca se corta ni desborda la pantalla) */}
+        <form id="profile-form" onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1">
           
           {/* Nombre visible o Nick */}
           <div>
@@ -242,27 +245,39 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             <span className="capitalize">{user.role === 'admin' ? 'Coordinador' : 'Vecino'}</span>
           </div>
 
-          {/* Botones */}
-          <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+        </form>
+
+        {/* Footer Fijado Siempre Visible en Celulares y Escritorio (Nunca se corta) */}
+        <div className="p-3 sm:p-4 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={onLogout}
+            className="px-2.5 sm:px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition flex items-center gap-1.5 cursor-pointer shrink-0"
+            title="Cerrar sesión en este dispositivo"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Cerrar Sesión</span>
+          </button>
+
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={onLogout}
-              className="px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition flex items-center gap-1.5 cursor-pointer"
+              onClick={onClose}
+              className="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
             >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Cerrar Sesión</span>
+              Cancelar
             </button>
-
             <button
               type="submit"
+              form="profile-form"
               disabled={loading}
-              className="px-5 py-2 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-semibold text-xs shadow-md transition disabled:opacity-50 cursor-pointer"
+              className="px-4 sm:px-5 py-2 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-semibold text-xs shadow-md transition disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
             >
-              {loading ? 'Guardando...' : 'Guardar Cambios'}
+              <Check className="w-3.5 h-3.5" />
+              <span>{loading ? 'Guardando...' : 'Guardar Cambios'}</span>
             </button>
           </div>
-
-        </form>
+        </div>
 
       </div>
     </div>
