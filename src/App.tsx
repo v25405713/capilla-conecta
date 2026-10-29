@@ -121,7 +121,13 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors">
+    <div
+      className={`bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors ${
+        activeTab === 'chat'
+          ? 'h-dvh max-h-dvh overflow-hidden'
+          : 'min-h-screen'
+      }`}
+    >
       
       {/* Indicador de conexión offline */}
       <OfflineIndicator />
@@ -158,16 +164,16 @@ export default function App() {
 
           {/* Contenido Principal con comportamiento responsive óptimo */}
           <main
-            className={`flex-1 flex flex-col w-full ${
+            className={`flex-1 min-h-0 flex flex-col w-full ${
               activeTab === 'chat'
-                ? 'p-0 m-0 h-[calc(100dvh-4rem-3.75rem)] md:h-[calc(100dvh-5.5rem)] md:max-w-7xl md:mx-auto md:px-6 md:pt-4 md:pb-8 overflow-hidden'
+                ? 'p-0 m-0 overflow-hidden pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] md:pb-6 md:px-6 md:pt-4 md:max-w-7xl md:mx-auto'
                 : 'max-w-7xl mx-auto px-2 sm:px-4 md:px-6 pt-3 sm:pt-5 pb-24 md:pb-8'
             }`}
           >
             
-            {/* PESTAÑA: CHAT COMUNITARIO (100% Pantalla Completa y Ancho sin desbordes) */}
+            {/* PESTAÑA: CHAT COMUNITARIO (Scroll aislado exclusivamente dentro del mensaje) */}
             {activeTab === 'chat' && (
-              <div className="flex-1 flex flex-col w-full h-full overflow-hidden">
+              <div className="flex-1 min-h-0 flex flex-col w-full h-full overflow-hidden">
                 <ChatView
                   currentUser={currentUser}
                   initialRoomId={chatRoomId}

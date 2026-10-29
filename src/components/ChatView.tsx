@@ -63,7 +63,24 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const [showConnectedPanel, setShowConnectedPanel] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<any>(null);
+
+  // Scroll aislado únicamente dentro del contenedor interno de mensajes (evita mover la pantalla o ventana)
+  const scrollToBottom = (smooth = true) => {
+    if (messagesContainerRef.current) {
+      if (smooth) {
+        messagesContainerRef.current.scrollTo({
+          top: messagesContainerRef.current.scrollHeight,
+          behavior: 'smooth'
+        });
+      } else {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      }
+    } else {
+      messagesEndRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'nearest' });
+    }
+  };
 
   // Determinar si el usuario puede escribir en esta sala
   const currentBarrioObj = BARRIOS_CAPILLA.find(b => b.id === currentRoomId);
@@ -81,10 +98,10 @@ export const ChatView: React.FC<ChatViewProps> = ({
       .then(res => {
         setMessages(res.messages);
         setLoading(false);
-        // Scroll to bottom
+        // Scroll interno a los últimos mensajes
         setTimeout(() => {
-          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
+          scrollToBottom(false);
+        }, 80);
       })
       .catch(err => {
         setErrorBanner(err.message || 'Error cargando mensajes');
@@ -108,8 +125,8 @@ export const ChatView: React.FC<ChatViewProps> = ({
           return [...prev, msg];
         });
         setTimeout(() => {
-          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 80);
+          scrollToBottom(true);
+        }, 60);
       }
     };
 
@@ -354,7 +371,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
       {/* Banner de regla de sala de barrio (si solo residentes pueden escribir) */}
       {!isGeneralRoom && (
-        <div className={`px-4 py-2 text-xs flex items-center justify-between border-b ${
+        <div className={`px-4 py-2 text-xs flex items-center justify-between border-b shrink-0 ${
           canPostInRoom
             ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40 text-emerald-800 dark:text-emerald-300'
             : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/40 text-amber-800 dark:text-amber-300'
@@ -373,20 +390,23 @@ export const ChatView: React.FC<ChatViewProps> = ({
       )}
 
       {errorBanner && (
-        <div className="px-4 py-2 bg-red-50 dark:bg-red-950/50 border-b border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs flex items-center gap-2">
+        <div className="px-4 py-2 bg-red-50 dark:bg-red-950/50 border-b border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs flex items-center gap-2 shrink-0">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           <span>{errorBanner}</span>
         </div>
       )}
 
       {/* Contenedor Principal Flexible (100% ancho) */}
-      <div className="flex-1 flex overflow-hidden relative">
+      <div className="flex-1 min-h-0 flex overflow-hidden relative">
         
         {/* Columna de Chat Principal */}
-        <div className="flex-1 flex flex-col h-full overflow-hidden">
+        <div className="flex-1 min-h-0 flex flex-col h-full overflow-hidden">
           
-          {/* Lista de Mensajes */}
-          <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3">
+          {/* Lista de Mensajes con scroll estrictamente interno */}
+          <div
+            ref={messagesContainerRef}
+            className="flex-1 min-h-0 overflow-y-auto overscroll-contain chat-messages-container p-3 sm:p-4 space-y-3"
+          >
         {loading ? (
           <div className="flex flex-col items-center justify-center h-48 text-slate-400 gap-2">
             <div className="w-6 h-6 border-2 border-teal-600 border-t-transparent rounded-full animate-spin" />
