@@ -61,6 +61,8 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const [feedbackToast, setFeedbackToast] = useState<string | null>(null);
   const [deleteConfirmMessageId, setDeleteConfirmMessageId] = useState<string | null>(null);
   const [showConnectedPanel, setShowConnectedPanel] = useState(false);
+  const [showSearchInput, setShowSearchInput] = useState(false);
+  const [showQuickEmojis, setShowQuickEmojis] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -305,68 +307,82 @@ export const ChatView: React.FC<ChatViewProps> = ({
   return (
     <div className="flex flex-col h-full w-full bg-white dark:bg-slate-900 border-y md:border md:rounded-2xl border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden relative">
       
-      {/* Barra Superior del Chat: Selector de Salas, Búsqueda y Vecinos */}
-      <div className="p-2.5 sm:p-3 md:p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80 flex flex-wrap items-center justify-between gap-2.5 shrink-0">
-        
-        {/* Selector de Salas */}
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <select
-              value={currentRoomId}
-              onChange={e => setCurrentRoomId(e.target.value)}
-              className="appearance-none pl-3 pr-8 py-1.5 text-xs font-bold rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white shadow-xs focus:ring-2 focus:ring-teal-500 focus:outline-hidden cursor-pointer"
+      {/* Barra Superior del Chat: Selector de Salas, Búsqueda y Vecinos en 1 sola fila limpia */}
+      <div className="px-3 py-2 border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-900/90 flex items-center justify-between gap-2 shrink-0 h-12">
+        {showSearchInput ? (
+          <div className="flex-1 flex items-center gap-2 animate-in fade-in">
+            <div className="relative flex-1">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+              <input
+                type="text"
+                autoFocus
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                placeholder="Buscar en esta sala..."
+                className="w-full pl-8 pr-2 py-1.5 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-1 focus:ring-teal-500"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setShowSearchInput(false);
+                setSearchTerm('');
+              }}
+              className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 cursor-pointer"
+              title="Cerrar búsqueda"
             >
-              <option value="todos-juntos">⛰️ Sala General "Todos juntos"</option>
-              <optgroup label="Salas por Barrio de Capilla del Monte">
-                {BARRIOS_CAPILLA.map(b => (
-                  <option key={b.id} value={b.id}>
-                    {b.icon} Barrio {b.name}
-                  </option>
-                ))}
-              </optgroup>
-            </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-2.5 pointer-events-none" />
+              <X className="w-4 h-4" />
+            </button>
           </div>
+        ) : (
+          <>
+            {/* Selector de Salas Compacto */}
+            <div className="relative max-w-[210px] sm:max-w-xs flex-1">
+              <select
+                value={currentRoomId}
+                onChange={e => setCurrentRoomId(e.target.value)}
+                className="w-full appearance-none pl-2.5 pr-7 py-1.5 text-xs font-bold rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white shadow-2xs focus:ring-2 focus:ring-teal-500 focus:outline-hidden cursor-pointer truncate"
+              >
+                <option value="todos-juntos">⛰️ Sala General "Todos juntos"</option>
+                <optgroup label="Salas por Barrio de Capilla del Monte">
+                  {BARRIOS_CAPILLA.map(b => (
+                    <option key={b.id} value={b.id}>
+                      {b.icon} Barrio {b.name}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-2.5 pointer-events-none" />
+            </div>
 
-          {/* Badge informativo de sala */}
-          <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-            {isGeneralRoom ? (
-              <span>Todos los vecinos de Capilla</span>
-            ) : (
-              <span>Barrio {currentBarrioObj?.name}</span>
-            )}
-          </div>
-        </div>
+            {/* Acciones: Botón Buscar y Botón Vecinos */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowSearchInput(true)}
+                className="p-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer"
+                title="Buscar mensajes"
+              >
+                <Search className="w-3.5 h-3.5" />
+              </button>
 
-        {/* Acciones: Buscador de mensajes y Botón de Vecinos */}
-        <div className="flex items-center gap-2">
-          <div className="relative w-32 sm:w-48">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              placeholder="Buscar en el chat..."
-              className="w-full pl-8 pr-2 py-1.5 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-1 focus:ring-teal-500"
-            />
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setShowConnectedPanel(prev => !prev)}
-            className={`px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shrink-0 ${
-              showConnectedPanel
-                ? 'bg-teal-700 text-white border-teal-700 shadow-xs'
-                : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700'
-            }`}
-            title="Ver vecinos conectados"
-          >
-            <Users className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-            <span className="hidden sm:inline">Vecinos</span>
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          </button>
-        </div>
-
+              <button
+                type="button"
+                onClick={() => setShowConnectedPanel(prev => !prev)}
+                className={`px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shrink-0 ${
+                  showConnectedPanel
+                    ? 'bg-teal-700 text-white border-teal-700 shadow-xs'
+                    : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700'
+                }`}
+                title="Ver vecinos conectados"
+              >
+                <Users className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                <span className="hidden sm:inline">Vecinos</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Banner de regla de sala de barrio (si solo residentes pueden escribir) */}
@@ -595,20 +611,24 @@ export const ChatView: React.FC<ChatViewProps> = ({
           </div>
         )}
 
-        {/* Barra de Emojis Rápidos */}
-        <div className="flex items-center gap-1.5 mb-2 overflow-x-auto pb-1 text-sm">
-          <span className="text-[11px] font-semibold text-slate-400 mr-1 shrink-0">Yuyos & Serranía:</span>
-          {QUICK_EMOJIS.map(emoji => (
-            <button
-              key={emoji}
-              type="button"
-              onClick={() => setInputText(prev => prev + emoji)}
-              className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 hover:scale-110 transition-transform cursor-pointer shrink-0"
-            >
-              {emoji}
-            </button>
-          ))}
-        </div>
+        {/* Drawer de Emojis Rápidos Serranos (Toggleable con botón de mate) */}
+        {showQuickEmojis && (
+          <div className="flex items-center gap-1.5 mb-2 overflow-x-auto pb-1 text-sm bg-slate-50 dark:bg-slate-800/80 p-2 rounded-xl border border-slate-200 dark:border-slate-700 animate-in fade-in slide-in-from-bottom-2">
+            <span className="text-[11px] font-semibold text-slate-400 mr-1 shrink-0">Serranía:</span>
+            {QUICK_EMOJIS.map(emoji => (
+              <button
+                key={emoji}
+                type="button"
+                onClick={() => {
+                  setInputText(prev => prev + emoji);
+                }}
+                className="p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 hover:scale-110 transition-transform cursor-pointer shrink-0 text-base"
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Input Form or Guest Banner */}
         {!currentUser ? (
@@ -626,24 +646,42 @@ export const ChatView: React.FC<ChatViewProps> = ({
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+          <form onSubmit={handleSendMessage} className="flex items-center gap-1.5 sm:gap-2">
+            {/* Botón Mate / Emojis Serranos */}
+            <button
+              type="button"
+              onClick={() => setShowQuickEmojis(!showQuickEmojis)}
+              className={`p-2 rounded-xl text-base transition-colors shrink-0 cursor-pointer ${
+                showQuickEmojis
+                  ? 'bg-teal-700 text-white'
+                  : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+              }`}
+              title="Emojis serranos de Capilla"
+            >
+              🧉
+            </button>
+
             <input
               type="text"
               value={inputText}
               onChange={handleInputChange}
+              onFocus={() => {
+                setShowQuickEmojis(false);
+                setTimeout(() => scrollToBottom(true), 150);
+              }}
               disabled={!canPostInRoom}
               placeholder={
                 canPostInRoom
-                  ? `Escribe en ${isGeneralRoom ? 'Todos juntos' : 'Barrio ' + currentBarrioObj?.name}... (usa @ para mencionar)`
-                  : `Solo los vecinos residentes de ${currentBarrioObj?.name} pueden escribir aquí.`
+                  ? `Escribe en ${isGeneralRoom ? 'Todos juntos' : 'Barrio ' + currentBarrioObj?.name}...`
+                  : `Solo residentes de ${currentBarrioObj?.name} pueden escribir`
               }
-              className="flex-1 px-4 py-2.5 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-teal-500 disabled:bg-slate-100 dark:disabled:bg-slate-800/40 disabled:text-slate-400 disabled:cursor-not-allowed"
+              className="flex-1 min-w-0 px-3.5 py-2 sm:py-2.5 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-teal-500 disabled:bg-slate-100 dark:disabled:bg-slate-800/40 disabled:text-slate-400 disabled:cursor-not-allowed"
             />
 
             <button
               type="submit"
               disabled={!inputText.trim() || !canPostInRoom}
-              className="p-2.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-semibold shadow-xs disabled:opacity-40 transition-colors cursor-pointer shrink-0 disabled:cursor-not-allowed"
+              className="p-2 sm:p-2.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-semibold shadow-xs disabled:opacity-40 transition-colors cursor-pointer shrink-0 disabled:cursor-not-allowed"
               title={canPostInRoom ? "Enviar mensaje" : `Solo residentes de ${currentBarrioObj?.name}`}
             >
               <Send className="w-4 h-4" />

@@ -124,7 +124,7 @@ export default function App() {
     <div
       className={`bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors ${
         activeTab === 'chat'
-          ? 'h-dvh max-h-dvh overflow-hidden'
+          ? 'fixed inset-0 h-full w-full overflow-hidden'
           : 'min-h-screen'
       }`}
     >
