@@ -69,7 +69,8 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="sticky top-0 z-40 shrink-0 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors pt-[env(safe-area-inset-top,0px)]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-16 flex items-center justify-between gap-3">
+      {/* Brand Zone (Hidden on mobile when in full chat to maximize screen space as in screenshot) */}
+      <div className={`${activeTab === 'chat' ? 'hidden md:flex' : 'flex'} max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-16 items-center justify-between gap-3`}>
         
         {/* Brand Zone */}
         <div className="flex items-center gap-3 shrink-0">
@@ -295,8 +296,8 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Modern Bottom Navigation Bar on Mobile Phones (Safe Area Aware) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 py-1 px-1 flex justify-around items-center shadow-lg pb-[max(0.4rem,env(safe-area-inset-bottom))]">
+      {/* Modern Top Tabs Bar on Mobile (Exactamente como se muestra en la captura del usuario) */}
+      <nav className="md:hidden flex justify-around items-center bg-white/95 dark:bg-slate-900/95 border-b border-slate-200 dark:border-slate-800 py-1 px-1 shadow-2xs shrink-0">
         <button
           onClick={() => setActiveTab('tablon')}
           className={`flex flex-col items-center py-1 px-2 text-[10px] font-semibold transition-colors cursor-pointer ${
@@ -321,7 +322,7 @@ export const Header: React.FC<HeaderProps> = ({
           <span>Chat</span>
         </button>
 
-        {user ? (
+        {user && (
           <button
             onClick={() => setActiveTab('mibarrio')}
             className={`flex flex-col items-center py-1 px-2 text-[10px] font-semibold transition-colors cursor-pointer ${
@@ -332,18 +333,6 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <MapPin className="w-4 h-4 mb-0.5" />
             <span>Mi Barrio</span>
-          </button>
-        ) : (
-          <button
-            onClick={() => setActiveTab('barrios')}
-            className={`flex flex-col items-center py-1 px-2 text-[10px] font-semibold transition-colors cursor-pointer ${
-              activeTab === 'barrios'
-                ? 'text-teal-700 dark:text-teal-400'
-                : 'text-slate-500 dark:text-slate-400'
-            }`}
-          >
-            <Compass className="w-4 h-4 mb-0.5" />
-            <span>Barrios</span>
           </button>
         )}
 
